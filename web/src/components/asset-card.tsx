@@ -3,11 +3,14 @@ import { File, FileText } from "lucide-react";
 import { type Asset } from "@/lib/api";
 import { ShareButton } from "@/components/share-button";
 
-export function AssetCard({ asset }: { asset: Asset }) {
+export function AssetCard({ asset, onOpen }: { asset: Asset; onOpen: () => void }) {
   const isImage = asset.mime_type?.startsWith("image/");
 
   return (
-    <div className="group overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/40">
+    <div
+      onClick={onOpen}
+      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/40"
+    >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
         {isImage && asset.url ? (
           // signed URL from a private bucket; plain img avoids next/image domain config
@@ -25,7 +28,9 @@ export function AssetCard({ asset }: { asset: Asset }) {
       <div className="p-3">
         <div className="flex items-start justify-between gap-2">
           <p className="min-w-0 flex-1 truncate text-sm font-medium">{asset.filename}</p>
-          <ShareButton targetType="asset" targetId={asset.id} />
+          <span onClick={(e) => e.stopPropagation()}>
+            <ShareButton targetType="asset" targetId={asset.id} />
+          </span>
         </div>
         {asset.content_text && (
           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{asset.content_text}</p>

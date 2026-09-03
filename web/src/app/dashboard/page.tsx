@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { listAssets, listFolders, type Asset, type Folder } from "@/lib/api";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AssetDetail } from "@/components/asset-detail";
 import { AssetGrid } from "@/components/asset-grid";
 import { OrganizePanel } from "@/components/organize-panel";
 import { SearchBar } from "@/components/search-bar";
@@ -13,6 +14,7 @@ export default function DashboardPage() {
   const [assets, setAssets] = React.useState<Asset[]>([]);
   const [folders, setFolders] = React.useState<Folder[]>([]);
   const [selected, setSelected] = React.useState<string | null>(null);
+  const [active, setActive] = React.useState<Asset | null>(null);
 
   const refresh = React.useCallback(async () => {
     try {
@@ -52,10 +54,12 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold">
               {title} <span className="font-normal text-muted-foreground">· {visible.length}</span>
             </h2>
-            <AssetGrid assets={visible} />
+            <AssetGrid assets={visible} onOpen={setActive} />
           </div>
         </div>
       </div>
+
+      <AssetDetail asset={active} folders={folders} onClose={() => setActive(null)} />
     </div>
   );
 }
