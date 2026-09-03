@@ -23,3 +23,21 @@ export async function uploadAsset(file: File): Promise<Asset> {
   if (!res.ok) throw new Error("Upload failed");
   return res.json();
 }
+
+export type FolderPlan = { name: string; asset_ids: string[] };
+
+export async function suggestFolders(): Promise<FolderPlan[]> {
+  const res = await fetch(`${BASE}/organize/suggest`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to get suggestions");
+  const data = await res.json();
+  return data.folders ?? [];
+}
+
+export async function applyOrganization(folders: FolderPlan[]): Promise<void> {
+  const res = await fetch(`${BASE}/organize/apply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ folders }),
+  });
+  if (!res.ok) throw new Error("Failed to apply");
+}

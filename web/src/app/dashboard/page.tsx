@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { listAssets, type Asset } from "@/lib/api";
 import { AssetGrid } from "@/components/asset-grid";
+import { OrganizePanel } from "@/components/organize-panel";
 import { Uploader } from "@/components/uploader";
 
 export default function DashboardPage() {
@@ -28,6 +29,7 @@ export default function DashboardPage() {
 
       <div className="mt-8 space-y-8">
         <Uploader onUploaded={refresh} />
+        <OrganizePanel assets={assets} onApplied={refresh} />
         <AssetGrid assets={assets} />
       </div>
     </div>
