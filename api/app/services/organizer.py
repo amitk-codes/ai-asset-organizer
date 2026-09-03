@@ -1,8 +1,7 @@
 import json
 
+from app.config import settings
 from app.groq_client import get_groq
-
-MODEL = "llama-3.3-70b-versatile"
 
 _SYSTEM = (
     "You organize files into a small, sensible set of folders. "
@@ -29,7 +28,7 @@ def suggest_folders(assets: list[dict]) -> list[dict]:
 
     client = get_groq()
     response = client.chat.completions.create(
-        model=MODEL,
+        model=settings.groq_model,
         messages=[
             {"role": "system", "content": _SYSTEM},
             {"role": "user", "content": json.dumps(catalog)},

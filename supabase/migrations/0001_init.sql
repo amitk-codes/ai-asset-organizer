@@ -16,7 +16,7 @@ create table assets (
     size_bytes bigint,
     content_text text,          -- extracted text / vision caption, used for search + organizing
     summary text,
-    embedding vector(768),      -- Gemini text-embedding-004 dimension
+    embedding vector(768),      -- 768-dim Gemini embedding
     status text not null default 'uploaded',
     created_at timestamptz not null default now()
 );
@@ -28,3 +28,8 @@ create index assets_embedding_idx on assets using hnsw (embedding vector_cosine_
 insert into storage.buckets (id, name, public)
 values ('assets', 'assets', false)
 on conflict (id) do nothing;
+
+-- lock the tables: only the backend's service_role key (which bypasses RLS) touches them;
+-- the frontend never queries the database directly
+alter table folders enable row level security;
+alter table assets enable row level security;

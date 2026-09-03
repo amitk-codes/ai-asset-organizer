@@ -10,7 +10,7 @@ flowchart LR
   U[User] --> W[Next.js web]
   W --> A[FastAPI api]
   A --> G[Gemini<br/>vision + embeddings]
-  A --> Q[Groq Llama<br/>organizing agent]
+  A --> Q[Groq LLM<br/>organizing agent]
   A --> S[(Supabase<br/>Postgres + pgvector + Storage)]
   C[MCP client] --> MCP[MCP server]
   MCP --> S
@@ -26,8 +26,7 @@ Every file follows one path on upload:
 1. **Store** — the raw file goes to a private Supabase Storage bucket.
 2. **Extract** — content becomes text: Gemini vision describes images, `pypdf` reads PDFs, text
    files are read directly. This `content_text` is what everything downstream reasons over.
-3. **Embed** — `content_text` is embedded (Gemini `text-embedding-004`, 768-dim) into a pgvector
-   column.
+3. **Embed** — `content_text` is embedded (Gemini embeddings, 768-dim) into a pgvector column.
 
 Extraction and embedding are best-effort: if either fails the upload still succeeds, the asset is
 just not yet searchable.
@@ -37,7 +36,7 @@ just not yet searchable.
 Two models, each doing what it is best at:
 
 - **Gemini** — multimodal, so it "sees" images and produces embeddings.
-- **Groq (Llama 3.3)** — very fast text reasoning, used for the organizing agent.
+- **Groq** — a very fast hosted LLM, used for the organizing agent (the exact model is configurable via `GROQ_MODEL`).
 
 A text-only model can't read an image, and one model for both jobs would compromise somewhere.
 Routing keeps each step both capable and fast.

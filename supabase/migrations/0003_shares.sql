@@ -4,3 +4,5 @@ create table shares (
     target_id uuid not null,
     created_at timestamptz not null default now()
 );
+
+alter table shares enable row level security;

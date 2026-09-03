@@ -20,7 +20,7 @@ structure you approve, and made searchable in plain English — "show me the inv
 | Frontend | Next.js, Tailwind, shadcn/ui, next-themes (dark/light) |
 | Backend | FastAPI (Python) |
 | Data | Supabase — Postgres + pgvector + Storage |
-| AI | Groq (Llama, agent/chat) · Gemini (vision + embeddings) |
+| AI | Groq (agent/chat) · Gemini (vision + embeddings) |
 
 Two models by design: Gemini reads images/PDFs, Groq handles fast reasoning and chat — the right
 model for each job.

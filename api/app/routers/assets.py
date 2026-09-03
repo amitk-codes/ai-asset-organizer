@@ -1,3 +1,4 @@
+import re
 import uuid
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -11,12 +12,17 @@ router = APIRouter(prefix="/assets", tags=["assets"])
 BUCKET = "assets"
 
 
+def _safe_name(name: str | None) -> str:
+    # storage keys reject spaces and many symbols; the original name is kept in the db
+    return re.sub(r"[^A-Za-z0-9._-]", "_", name or "file")
+
+
 @router.post("")
 async def upload_asset(file: UploadFile = File(...)):
     data = await file.read()
     asset_id = str(uuid.uuid4())
-    # namespace the path by id so identical filenames never collide
-    storage_path = f"{asset_id}/{file.filename}"
+    # namespace by id (no collisions) and sanitise the name for the storage key
+    storage_path = f"{asset_id}/{_safe_name(file.filename)}"
 
     supabase = get_supabase()
     try:

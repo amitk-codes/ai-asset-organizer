@@ -5,7 +5,7 @@ from pypdf import PdfReader
 
 from app.gemini_client import get_gemini
 
-VISION_MODEL = "gemini-2.0-flash"
+VISION_MODEL = "gemini-flash-latest"
 
 _IMAGE_PROMPT = (
     "Describe this image for a file organizer. In 2-3 sentences cover what it shows, "
