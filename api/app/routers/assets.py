@@ -1,9 +1,10 @@
 import re
 import uuid
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
+from app.auth import get_user_id
 from app.services.embeddings import embed_text
 from app.services.extraction import extract_content
 from app.storage import sign_paths
@@ -24,7 +25,7 @@ class MoveRequest(BaseModel):
 
 
 @router.post("")
-async def upload_asset(file: UploadFile = File(...)):
+async def upload_asset(file: UploadFile = File(...), user_id: str = Depends(get_user_id)):
     data = await file.read()
     asset_id = str(uuid.uuid4())
     # namespace by id (no collisions) and sanitise the name for the storage key
@@ -54,6 +55,7 @@ async def upload_asset(file: UploadFile = File(...)):
 
     row = {
         "id": asset_id,
+        "user_id": user_id,
         "filename": file.filename,
         "storage_path": storage_path,
         "mime_type": file.content_type,
@@ -67,10 +69,14 @@ async def upload_asset(file: UploadFile = File(...)):
 
 
 @router.get("")
-def list_assets():
+def list_assets(user_id: str = Depends(get_user_id)):
     supabase = get_supabase()
     result = (
-        supabase.table("assets").select("*").order("created_at", desc=True).execute()
+        supabase.table("assets")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .execute()
     )
     assets = result.data
     urls = sign_paths([a["storage_path"] for a in assets])
@@ -80,15 +86,38 @@ def list_assets():
 
 
 @router.patch("/{asset_id}")
-def move_asset(asset_id: str, request: MoveRequest):
+def move_asset(asset_id: str, request: MoveRequest, user_id: str = Depends(get_user_id)):
     supabase = get_supabase()
     status = "organized" if request.folder_id else "processed"
     result = (
         supabase.table("assets")
         .update({"folder_id": request.folder_id, "status": status})
         .eq("id", asset_id)
+        .eq("user_id", user_id)
         .execute()
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="asset not found")
     return result.data[0]
+
+
+@router.delete("/{asset_id}")
+def delete_asset(asset_id: str, user_id: str = Depends(get_user_id)):
+    supabase = get_supabase()
+    found = (
+        supabase.table("assets")
+        .select("storage_path")
+        .eq("id", asset_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not found.data:
+        raise HTTPException(status_code=404, detail="asset not found")
+
+    try:
+        supabase.storage.from_(BUCKET).remove([found.data[0]["storage_path"]])
+    except Exception:
+        pass  # best-effort; still remove the row
+
+    supabase.table("assets").delete().eq("id", asset_id).eq("user_id", user_id).execute()
+    return {"ok": True}

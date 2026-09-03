@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from app.auth import get_user_id
 from app.services.embeddings import embed_text
 from app.supabase_client import get_supabase
 
@@ -13,7 +14,7 @@ class SearchRequest(BaseModel):
 
 
 @router.post("")
-def search(request: SearchRequest):
+def search(request: SearchRequest, user_id: str = Depends(get_user_id)):
     embedding = embed_text(request.query)
     if embedding is None:
         return {"results": []}
@@ -21,6 +22,6 @@ def search(request: SearchRequest):
     supabase = get_supabase()
     result = supabase.rpc(
         "match_assets",
-        {"query_embedding": embedding, "match_count": request.limit},
+        {"query_embedding": embedding, "match_count": request.limit, "owner": user_id},
     ).execute()
     return {"results": result.data}

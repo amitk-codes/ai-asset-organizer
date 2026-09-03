@@ -6,7 +6,7 @@ Hugging Face.
 ## 1. Supabase — database + storage
 - Create a project.
 - Open the SQL editor and run the migrations in order:
-  `supabase/migrations/0001_init.sql`, then `0002_search.sql`, then `0003_shares.sql`.
+  `0001_init.sql`, `0002_search.sql`, `0003_shares.sql`, then `0004_auth.sql`.
 - Copy your Project URL and the `service_role` key (Settings → API).
 
 ## 2. API keys

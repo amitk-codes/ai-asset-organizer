@@ -1,28 +1,33 @@
 "use client";
 
 import * as React from "react";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { moveAsset, type Asset, type Folder } from "@/lib/api";
+import { deleteAsset, moveAsset, type Asset, type Folder } from "@/lib/api";
 import { ShareButton } from "@/components/share-button";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function AssetDetail({
   asset,
   folders,
   onClose,
   onMoved,
+  onDeleted,
 }: {
   asset: Asset | null;
   folders: Folder[];
   onClose: () => void;
   onMoved: () => void;
+  onDeleted: () => void;
 }) {
   const [folderId, setFolderId] = React.useState<string | null>(asset?.folder_id ?? null);
+  const [confirming, setConfirming] = React.useState(false);
 
   React.useEffect(() => {
     setFolderId(asset?.folder_id ?? null);
+    setConfirming(false);
   }, [asset]);
 
   React.useEffect(() => {
@@ -47,6 +52,21 @@ export function AssetDetail({
     } catch {
       toast.error("Couldn't move the file.");
       setFolderId(current.folder_id ?? null);
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirming) {
+      setConfirming(true);
+      setTimeout(() => setConfirming(false), 3000);
+      return;
+    }
+    try {
+      await deleteAsset(current.id);
+      toast.success("Deleted");
+      onDeleted();
+    } catch {
+      toast.error("Couldn't delete the file.");
     }
   }
 
@@ -121,6 +141,17 @@ export function AssetDetail({
             </a>
           )}
           <ShareButton targetType="asset" targetId={asset.id} />
+          <button
+            onClick={handleDelete}
+            className={cn(
+              "ml-auto flex items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors",
+              confirming
+                ? "bg-red-500/10 text-red-500"
+                : "text-muted-foreground hover:text-red-500",
+            )}
+          >
+            <Trash2 className="h-4 w-4" /> {confirming ? "Confirm?" : "Delete"}
+          </button>
         </div>
       </div>
     </div>

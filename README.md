@@ -7,6 +7,7 @@ structure you approve, and made searchable in plain English — "show me the inv
 
 ## Highlights
 
+- **Private workspaces** — a single sign-in key per workspace; you only ever see your own files.
 - **Understands your assets** — images (vision) and PDFs (text) are read, not just stored.
 - **Suggest-and-confirm organizing** — an AI agent proposes folders; you stay in control.
 - **Semantic search (RAG)** — find things by meaning, not filename.
