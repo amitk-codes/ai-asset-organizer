@@ -5,6 +5,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.services.embeddings import embed_text
 from app.services.extraction import extract_content
+from app.storage import sign_paths
 from app.supabase_client import get_supabase
 
 router = APIRouter(prefix="/assets", tags=["assets"])
@@ -66,4 +67,8 @@ def list_assets():
     result = (
         supabase.table("assets").select("*").order("created_at", desc=True).execute()
     )
-    return result.data
+    assets = result.data
+    urls = sign_paths([a["storage_path"] for a in assets])
+    for asset in assets:
+        asset["url"] = urls.get(asset["storage_path"])
+    return assets
