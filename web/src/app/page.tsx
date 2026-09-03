@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, FolderTree, Search, Share2, Sparkles } from "lucide-react";
+import { ArrowRight, ExternalLink, FolderTree, Search, Share2, Sparkles } from "lucide-react";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 const features = [
@@ -29,7 +29,14 @@ export default function Home() {
           <Link href="/dashboard" className={buttonVariants()}>
             Get started <ArrowRight className="h-4 w-4" />
           </Link>
-          <Button variant="outline">View demo</Button>
+          <a
+            href="https://github.com/amitk-codes/ai-asset-organizer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            View source <ExternalLink className="h-4 w-4" />
+          </a>
         </div>
       </section>
 
