@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Loader2, Sparkles, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { applyOrganization, suggestFolders, type Asset, type FolderPlan } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ export function OrganizePanel({ assets, onApplied }: { assets: Asset[]; onApplie
     setLoading(true);
     try {
       setPlan(await suggestFolders());
+    } catch {
+      toast.error("Couldn't get suggestions.");
     } finally {
       setLoading(false);
     }
@@ -46,9 +49,13 @@ export function OrganizePanel({ assets, onApplied }: { assets: Asset[]; onApplie
     if (!plan) return;
     setApplying(true);
     try {
-      await applyOrganization(plan.filter((folder) => folder.asset_ids.length > 0));
+      const applied = plan.filter((folder) => folder.asset_ids.length > 0);
+      await applyOrganization(applied);
+      toast.success(`Organized into ${applied.length} folder${applied.length > 1 ? "s" : ""}`);
       setPlan(null);
       onApplied();
+    } catch {
+      toast.error("Couldn't apply the organization.");
     } finally {
       setApplying(false);
     }

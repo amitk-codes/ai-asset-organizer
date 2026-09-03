@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Check, Loader2, Share2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { createShare } from "@/lib/api";
 
@@ -21,9 +22,11 @@ export function ShareButton({
       const url = `${window.location.origin}/share/${created.id}`;
       await navigator.clipboard.writeText(url);
       setState("done");
+      toast.success("Share link copied to clipboard");
       setTimeout(() => setState("idle"), 2000);
     } catch {
       setState("idle");
+      toast.error("Couldn't create a share link.");
     }
   }
 

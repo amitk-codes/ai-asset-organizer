@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Loader2, UploadCloud } from "lucide-react";
+import { toast } from "sonner";
 
 import { uploadAsset } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -15,8 +16,11 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
     if (!files || files.length === 0) return;
     setBusy(true);
     try {
-      await Promise.all(Array.from(files).map((file) => uploadAsset(file)));
+      const uploaded = await Promise.all(Array.from(files).map((file) => uploadAsset(file)));
+      toast.success(`Uploaded ${uploaded.length} file${uploaded.length > 1 ? "s" : ""}`);
       onUploaded();
+    } catch {
+      toast.error("Upload failed. Please try again.");
     } finally {
       setBusy(false);
     }
