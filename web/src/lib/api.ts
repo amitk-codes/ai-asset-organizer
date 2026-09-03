@@ -8,11 +8,21 @@ export type Asset = {
   folder_id: string | null;
   status: string;
   created_at: string;
+  content_text?: string | null;
+  url?: string | null;
 };
 
 export async function listAssets(): Promise<Asset[]> {
   const res = await fetch(`${BASE}/assets`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load assets");
+  return res.json();
+}
+
+export type Folder = { id: string; name: string; count: number };
+
+export async function listFolders(): Promise<Folder[]> {
+  const res = await fetch(`${BASE}/folders`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to load folders");
   return res.json();
 }
 
