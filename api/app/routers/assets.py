@@ -2,6 +2,7 @@ import uuid
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from app.services.embeddings import embed_text
 from app.services.extraction import extract_content
 from app.supabase_client import get_supabase
 
@@ -32,6 +33,13 @@ async def upload_asset(file: UploadFile = File(...)):
     except Exception:
         content_text = ""  # best-effort; a failed extraction shouldn't fail the upload
 
+    embedding = None
+    if content_text:
+        try:
+            embedding = embed_text(content_text)
+        except Exception:
+            embedding = None
+
     row = {
         "id": asset_id,
         "filename": file.filename,
@@ -39,6 +47,7 @@ async def upload_asset(file: UploadFile = File(...)):
         "mime_type": file.content_type,
         "size_bytes": len(data),
         "content_text": content_text or None,
+        "embedding": embedding,
         "status": "processed" if content_text else "uploaded",
     }
     inserted = supabase.table("assets").insert(row).execute()
