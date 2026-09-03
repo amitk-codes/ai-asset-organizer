@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { ExternalLink, X } from "lucide-react";
+import { toast } from "sonner";
 
-import { type Asset, type Folder } from "@/lib/api";
+import { moveAsset, type Asset, type Folder } from "@/lib/api";
 import { ShareButton } from "@/components/share-button";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -11,11 +12,19 @@ export function AssetDetail({
   asset,
   folders,
   onClose,
+  onMoved,
 }: {
   asset: Asset | null;
   folders: Folder[];
   onClose: () => void;
+  onMoved: () => void;
 }) {
+  const [folderId, setFolderId] = React.useState<string | null>(asset?.folder_id ?? null);
+
+  React.useEffect(() => {
+    setFolderId(asset?.folder_id ?? null);
+  }, [asset]);
+
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -26,8 +35,20 @@ export function AssetDetail({
 
   if (!asset) return null;
 
-  const isImage = asset.mime_type?.startsWith("image/");
-  const folder = folders.find((f) => f.id === asset.folder_id);
+  const current = asset;
+  const isImage = current.mime_type?.startsWith("image/");
+
+  async function handleMove(next: string | null) {
+    setFolderId(next);
+    try {
+      await moveAsset(current.id, next);
+      toast.success(next ? "Moved to folder" : "Removed from folder");
+      onMoved();
+    } catch {
+      toast.error("Couldn't move the file.");
+      setFolderId(current.folder_id ?? null);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -66,11 +87,25 @@ export function AssetDetail({
             </div>
           )}
 
-          <div className="space-y-2 text-sm">
+          <div className="space-y-3 text-sm">
             <Meta label="Type" value={asset.mime_type ?? "—"} />
             <Meta label="Size" value={formatSize(asset.size_bytes)} />
-            <Meta label="Folder" value={folder?.name ?? "Unorganized"} />
             <Meta label="Added" value={new Date(asset.created_at).toLocaleDateString()} />
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Folder</span>
+              <select
+                value={folderId ?? ""}
+                onChange={(e) => handleMove(e.target.value || null)}
+                className="rounded-md border border-border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Unorganized</option>
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

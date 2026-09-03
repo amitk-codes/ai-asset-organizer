@@ -93,7 +93,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <AssetDetail asset={active} folders={folders} onClose={() => setActive(null)} />
+      <AssetDetail
+        asset={active}
+        folders={folders}
+        onClose={() => setActive(null)}
+        onMoved={refresh}
+      />
     </div>
   );
 }

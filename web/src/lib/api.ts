@@ -26,6 +26,16 @@ export async function listFolders(): Promise<Folder[]> {
   return res.json();
 }
 
+export async function moveAsset(assetId: string, folderId: string | null): Promise<Asset> {
+  const res = await fetch(`${BASE}/assets/${assetId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ folder_id: folderId }),
+  });
+  if (!res.ok) throw new Error("Move failed");
+  return res.json();
+}
+
 export async function uploadAsset(file: File): Promise<Asset> {
   const form = new FormData();
   form.append("file", file);
