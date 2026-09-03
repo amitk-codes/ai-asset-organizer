@@ -2,6 +2,7 @@ import uuid
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from app.services.extraction import extract_content
 from app.supabase_client import get_supabase
 
 router = APIRouter(prefix="/assets", tags=["assets"])
@@ -26,13 +27,19 @@ async def upload_asset(file: UploadFile = File(...)):
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"upload failed: {exc}") from exc
 
+    try:
+        content_text = extract_content(data, file.content_type)
+    except Exception:
+        content_text = ""  # best-effort; a failed extraction shouldn't fail the upload
+
     row = {
         "id": asset_id,
         "filename": file.filename,
         "storage_path": storage_path,
         "mime_type": file.content_type,
         "size_bytes": len(data),
-        "status": "uploaded",
+        "content_text": content_text or None,
+        "status": "processed" if content_text else "uploaded",
     }
     inserted = supabase.table("assets").insert(row).execute()
     return inserted.data[0]
