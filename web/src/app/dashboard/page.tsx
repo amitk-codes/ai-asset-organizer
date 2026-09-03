@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [active, setActive] = React.useState<Asset | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [search, setSearch] = React.useState<Asset[] | null>(null);
 
   const refresh = React.useCallback(async () => {
     try {
@@ -57,17 +58,36 @@ export default function DashboardPage() {
             <EmptyState onUploaded={refresh} />
           ) : (
             <>
-              <SearchBar />
-              <Uploader onUploaded={refresh} />
-              <OrganizePanel assets={assets} onApplied={refresh} />
+              <SearchBar assets={assets} onResults={setSearch} />
 
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold">
-                  {title}{" "}
-                  <span className="font-normal text-muted-foreground">· {visible.length}</span>
-                </h2>
-                <AssetGrid assets={visible} onOpen={setActive} />
-              </div>
+              {search !== null ? (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold">
+                    Search results{" "}
+                    <span className="font-normal text-muted-foreground">· {search.length}</span>
+                  </h2>
+                  {search.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
+                      No strong matches. Try different words.
+                    </div>
+                  ) : (
+                    <AssetGrid assets={search} onOpen={setActive} />
+                  )}
+                </div>
+              ) : (
+                <>
+                  <Uploader onUploaded={refresh} />
+                  <OrganizePanel assets={assets} onApplied={refresh} />
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold">
+                      {title}{" "}
+                      <span className="font-normal text-muted-foreground">· {visible.length}</span>
+                    </h2>
+                    <AssetGrid assets={visible} onOpen={setActive} />
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
