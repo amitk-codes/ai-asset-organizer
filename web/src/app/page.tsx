@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { ArrowRight, FolderTree, Search, Share2, Sparkles } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 const features = [
@@ -25,9 +26,9 @@ export default function Home() {
           Assets are understood, grouped into folders you approve, and made searchable in plain English.
         </p>
         <div className="mt-8 flex gap-3">
-          <Button>
+          <Link href="/dashboard" className={buttonVariants()}>
             Get started <ArrowRight className="h-4 w-4" />
-          </Button>
+          </Link>
           <Button variant="outline">View demo</Button>
         </div>
       </section>
