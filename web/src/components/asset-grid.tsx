@@ -2,6 +2,7 @@ import { File, FileText, Image as ImageIcon } from "lucide-react";
 
 import { type Asset } from "@/lib/api";
 import { Card } from "@/components/ui/card";
+import { ShareButton } from "@/components/share-button";
 
 function iconFor(mime: string | null) {
   if (mime?.startsWith("image/")) return ImageIcon;
@@ -27,10 +28,11 @@ export function AssetGrid({ assets }: { assets: Asset[] }) {
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
               <Icon className="h-5 w-5" />
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{asset.filename}</p>
               <p className="text-xs capitalize text-muted-foreground">{asset.status}</p>
             </div>
+            <ShareButton targetType="asset" targetId={asset.id} />
           </Card>
         );
       })}

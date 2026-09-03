@@ -5,6 +5,7 @@ import * as React from "react";
 import { listAssets, type Asset } from "@/lib/api";
 import { AssetGrid } from "@/components/asset-grid";
 import { OrganizePanel } from "@/components/organize-panel";
+import { SearchBar } from "@/components/search-bar";
 import { Uploader } from "@/components/uploader";
 
 export default function DashboardPage() {
@@ -28,6 +29,7 @@ export default function DashboardPage() {
       <p className="mt-1 text-muted-foreground">Upload files and let AI organize them.</p>
 
       <div className="mt-8 space-y-8">
+        <SearchBar />
         <Uploader onUploaded={refresh} />
         <OrganizePanel assets={assets} onApplied={refresh} />
         <AssetGrid assets={assets} />
