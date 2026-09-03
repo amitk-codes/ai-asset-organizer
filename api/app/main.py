@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import assets, folders, organize, search, share
+from app.routers import assets, auth, folders, organize, search, share
 
 app = FastAPI(title="AI Asset Organizer API")
 
@@ -14,6 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(assets.router)
 app.include_router(folders.router)
 app.include_router(organize.router)

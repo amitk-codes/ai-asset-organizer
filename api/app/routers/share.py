@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.auth import get_user_id
 from app.supabase_client import get_supabase
 
 router = APIRouter(prefix="/share", tags=["share"])
@@ -15,10 +16,22 @@ class ShareRequest(BaseModel):
 
 
 @router.post("")
-def create_share(request: ShareRequest):
+def create_share(request: ShareRequest, user_id: str = Depends(get_user_id)):
     if request.target_type not in ("folder", "asset"):
         raise HTTPException(status_code=400, detail="target_type must be 'folder' or 'asset'")
     supabase = get_supabase()
+    # only the owner can share their folder or asset
+    table = "folders" if request.target_type == "folder" else "assets"
+    owned = (
+        supabase.table(table)
+        .select("id")
+        .eq("id", request.target_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not owned.data:
+        raise HTTPException(status_code=404, detail="not found")
+
     inserted = (
         supabase.table("shares")
         .insert({"target_type": request.target_type, "target_id": request.target_id})

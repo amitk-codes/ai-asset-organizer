@@ -69,13 +69,22 @@ served through short-lived signed URLs — access is controlled and links expire
 Protocol, so an MCP client (e.g. Claude Desktop) can drive the organizer directly. The REST API and
 the MCP server share the same service layer — one implementation, two interfaces.
 
+## Accounts
+
+Sign-in is a single **workspace key**. Generating a key creates a workspace; the key is the
+credential, sent as an `X-Api-Key` header on every request and resolved to a user id server-side.
+Only a SHA-256 hash of the key is stored, and the key can be rotated without touching the user's data
+(assets and folders reference a stable user id, not the key). Every read and write is scoped to that
+user; shared links stay public so anyone with the link can view.
+
 ## Data model
 
 | Table | Holds |
 |-------|-------|
-| `assets` | file metadata, `content_text`, `embedding vector(768)`, `folder_id`, `status` |
-| `folders` | organized groups |
-| `shares` | share tokens pointing at a folder or asset |
+| `users` | one row per workspace key (stores only a hash of the key) |
+| `assets` | file metadata, `content_text`, `embedding vector(768)`, `folder_id`, `user_id`, `status` |
+| `folders` | organized groups, scoped by `user_id` |
+| `shares` | share tokens pointing at a folder or asset (public to view) |
 
 ## Trade-offs & what's next
 
@@ -83,4 +92,5 @@ the MCP server share the same service layer — one implementation, two interfac
   task types would improve recall.
 - Processing is synchronous on upload; a background queue (e.g. Celery) would scale better for large
   batches.
-- No auth yet — this is a single-workspace demo. Per-user data with row-level security is the next step.
+- Auth is a lightweight "workspace key" (one shared secret per workspace); email magic-links or OAuth
+  would be the next step for account recovery and multi-device use.

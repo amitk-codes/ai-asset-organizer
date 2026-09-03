@@ -1,6 +1,6 @@
-import { FolderTree, Search, Sparkles } from "lucide-react";
+import { FolderTree, Search, Sparkles, Upload } from "lucide-react";
 
-import { Uploader } from "@/components/uploader";
+import { Button } from "@/components/ui/button";
 
 const steps = [
   { icon: Sparkles, title: "Upload anything", desc: "Images, PDFs and documents. AI reads each one." },
@@ -8,7 +8,7 @@ const steps = [
   { icon: Search, title: "Find by meaning", desc: "Search in plain English, not by filename." },
 ];
 
-export function EmptyState({ onUploaded }: { onUploaded: () => void }) {
+export function EmptyState({ onUpload }: { onUpload: () => void }) {
   return (
     <div className="mx-auto max-w-2xl py-6 text-center">
       <h2 className="text-2xl font-bold tracking-tight">Start by uploading your files</h2>
@@ -28,7 +28,9 @@ export function EmptyState({ onUploaded }: { onUploaded: () => void }) {
         ))}
       </div>
 
-      <Uploader onUploaded={onUploaded} />
+      <Button onClick={onUpload}>
+        <Upload className="h-4 w-4" /> Upload files
+      </Button>
     </div>
   );
 }
