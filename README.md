@@ -35,4 +35,7 @@ model for each job.
 
 ## Getting started
 
-Setup and deployment instructions are documented as the project takes shape. See `api/` and `web/`.
+- **Local dev:** run the backend (see [`api/README.md`](./api/README.md)) and the frontend
+  (`cd web && npm install && npm run dev`).
+- **Architecture:** see [ARCHITECTURE.md](./ARCHITECTURE.md).
+- **Deployment:** see [DEPLOY.md](./DEPLOY.md).
