@@ -2,6 +2,7 @@ import re
 import uuid
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from pydantic import BaseModel
 
 from app.services.embeddings import embed_text
 from app.services.extraction import extract_content
@@ -16,6 +17,10 @@ BUCKET = "assets"
 def _safe_name(name: str | None) -> str:
     # storage keys reject spaces and many symbols; the original name is kept in the db
     return re.sub(r"[^A-Za-z0-9._-]", "_", name or "file")
+
+
+class MoveRequest(BaseModel):
+    folder_id: str | None = None  # null moves the asset out of any folder
 
 
 @router.post("")
@@ -72,3 +77,18 @@ def list_assets():
     for asset in assets:
         asset["url"] = urls.get(asset["storage_path"])
     return assets
+
+
+@router.patch("/{asset_id}")
+def move_asset(asset_id: str, request: MoveRequest):
+    supabase = get_supabase()
+    status = "organized" if request.folder_id else "processed"
+    result = (
+        supabase.table("assets")
+        .update({"folder_id": request.folder_id, "status": status})
+        .eq("id", asset_id)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="asset not found")
+    return result.data[0]
