@@ -19,29 +19,35 @@ class ApplyRequest(BaseModel):
 @router.post("/suggest")
 def suggest():
     supabase = get_supabase()
-    # only assets that haven't been placed in a folder yet
-    result = (
+    unorganized = (
         supabase.table("assets")
         .select("id, filename, content_text")
         .is_("folder_id", "null")
         .execute()
     )
-    return {"folders": suggest_folders(result.data)}
+    existing = supabase.table("folders").select("name").execute()
+    names = [f["name"] for f in existing.data]
+    return {"folders": suggest_folders(unorganized.data, names)}
 
 
 @router.post("/apply")
 def apply(request: ApplyRequest):
     supabase = get_supabase()
+    existing = supabase.table("folders").select("id, name").execute()
+    by_name = {f["name"]: f["id"] for f in existing.data}
+
     created = []
     for folder in request.folders:
         if not folder.asset_ids:
             continue
-        inserted = supabase.table("folders").insert({"name": folder.name}).execute()
-        folder_id = inserted.data[0]["id"]
+        # reuse a folder of the same name instead of creating a duplicate
+        folder_id = by_name.get(folder.name)
+        if folder_id is None:
+            inserted = supabase.table("folders").insert({"name": folder.name}).execute()
+            folder_id = inserted.data[0]["id"]
+            by_name[folder.name] = folder_id
         supabase.table("assets").update(
             {"folder_id": folder_id, "status": "organized"}
         ).in_("id", folder.asset_ids).execute()
-        created.append(
-            {"id": folder_id, "name": folder.name, "count": len(folder.asset_ids)}
-        )
+        created.append({"id": folder_id, "name": folder.name, "count": len(folder.asset_ids)})
     return {"folders": created}

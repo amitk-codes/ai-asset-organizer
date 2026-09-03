@@ -12,7 +12,7 @@ _SYSTEM = (
 )
 
 
-def suggest_folders(assets: list[dict]) -> list[dict]:
+def suggest_folders(assets: list[dict], existing_names: list[str] | None = None) -> list[dict]:
     if not assets:
         return []
 
@@ -26,12 +26,19 @@ def suggest_folders(assets: list[dict]) -> list[dict]:
         for a in assets
     ]
 
+    user_content = json.dumps(catalog)
+    if existing_names:
+        user_content += (
+            "\n\nReuse one of these existing folders when an asset fits it: "
+            + json.dumps(existing_names)
+        )
+
     client = get_groq()
     response = client.chat.completions.create(
         model=settings.groq_model,
         messages=[
             {"role": "system", "content": _SYSTEM},
-            {"role": "user", "content": json.dumps(catalog)},
+            {"role": "user", "content": user_content},
         ],
         response_format={"type": "json_object"},
         temperature=0.2,
