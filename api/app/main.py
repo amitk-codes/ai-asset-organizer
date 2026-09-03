@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import assets
+from app.routers import assets, organize
 
 app = FastAPI(title="AI Asset Organizer API")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(assets.router)
+app.include_router(organize.router)
 
 
 @app.get("/health")
