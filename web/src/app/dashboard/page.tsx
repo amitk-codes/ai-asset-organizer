@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AssetDetail } from "@/components/asset-detail";
 import { AssetGrid } from "@/components/asset-grid";
 import { EmptyState } from "@/components/empty-state";
+import { GridToolbar, type SortKey, type TypeFilter } from "@/components/grid-toolbar";
 import { OrganizePanel } from "@/components/organize-panel";
 import { SearchBar } from "@/components/search-bar";
 import { SkeletonGrid } from "@/components/skeleton-grid";
@@ -19,6 +20,8 @@ export default function DashboardPage() {
   const [active, setActive] = React.useState<Asset | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState<Asset[] | null>(null);
+  const [typeFilter, setTypeFilter] = React.useState<TypeFilter>("all");
+  const [sort, setSort] = React.useState<SortKey>("newest");
 
   const refresh = React.useCallback(async () => {
     try {
@@ -37,6 +40,17 @@ export default function DashboardPage() {
   }, [refresh]);
 
   const visible = selected ? assets.filter((asset) => asset.folder_id === selected) : assets;
+  const filtered = [...visible]
+    .filter((asset) => {
+      if (typeFilter === "image") return asset.mime_type?.startsWith("image/");
+      if (typeFilter === "doc") return !asset.mime_type?.startsWith("image/");
+      return true;
+    })
+    .sort((a, b) =>
+      sort === "name"
+        ? a.filename.localeCompare(b.filename)
+        : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
   const title = selected
     ? folders.find((folder) => folder.id === selected)?.name ?? "Folder"
     : "All files";
@@ -80,11 +94,19 @@ export default function DashboardPage() {
                   <OrganizePanel assets={assets} onApplied={refresh} />
 
                   <div className="space-y-4">
-                    <h2 className="text-lg font-semibold">
-                      {title}{" "}
-                      <span className="font-normal text-muted-foreground">· {visible.length}</span>
-                    </h2>
-                    <AssetGrid assets={visible} onOpen={setActive} />
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-lg font-semibold">
+                        {title}{" "}
+                        <span className="font-normal text-muted-foreground">· {filtered.length}</span>
+                      </h2>
+                      <GridToolbar
+                        type={typeFilter}
+                        onType={setTypeFilter}
+                        sort={sort}
+                        onSort={setSort}
+                      />
+                    </div>
+                    <AssetGrid assets={filtered} onOpen={setActive} />
                   </div>
                 </>
               )}
