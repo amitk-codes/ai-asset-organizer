@@ -1,10 +1,13 @@
 "use client";
 
+import * as React from "react";
 import { X } from "lucide-react";
 
 import { type Asset } from "@/lib/api";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { OrganizePanel } from "@/components/organize-panel";
-import { Uploader } from "@/components/uploader";
+import { Uploader, type UploaderHandle } from "@/components/uploader";
 
 export function UploadModal({
   open,
@@ -17,39 +20,60 @@ export function UploadModal({
   onReload: () => void;
   assets: Asset[];
 }) {
-  if (!open) return null;
+  const uploaderRef = React.useRef<UploaderHandle>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [confirmClose, setConfirmClose] = React.useState(false);
 
   const unorganizedCount = assets.filter((a) => !a.folder_id).length;
 
+  // intercept every close trigger (X / Esc / overlay): block while uploading
+  function requestClose() {
+    if (busy) setConfirmClose(true);
+    else onClose();
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fade-in absolute inset-0 bg-black/40" onClick={onClose} />
+    <>
+      <Dialog open={open} onOpenChange={(next) => !next && requestClose()}>
+        <DialogContent title="Upload files" className="max-w-2xl rounded-3xl bg-card p-6 shadow-2xl">
+          <div className="mb-5 flex items-center justify-between">
+            <h3 className="text-lg font-extrabold">Upload files</h3>
+            <button
+              onClick={requestClose}
+              aria-label="Close"
+              className="focus-ring flex h-10 w-10 items-center justify-center rounded-2xl bg-card text-muted-foreground clay-sm clay-press hover:text-foreground"
+            >
+              <X className="h-5 w-5" strokeWidth={2.5} />
+            </button>
+          </div>
 
-      <div className="spotlight-anim relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-card p-6 shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-extrabold">Upload files</h3>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-card text-muted-foreground clay-sm clay-press hover:text-foreground"
-          >
-            <X className="h-5 w-5" strokeWidth={2.5} />
-          </button>
-        </div>
+          <div className="space-y-5">
+            <Uploader ref={uploaderRef} onUploaded={onReload} onBusyChange={setBusy} />
+            {unorganizedCount > 0 && !busy && (
+              <OrganizePanel
+                assets={assets}
+                onApplied={() => {
+                  onReload();
+                  onClose();
+                }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        <div className="space-y-5">
-          <Uploader onUploaded={onReload} />
-          {unorganizedCount > 0 && (
-            <OrganizePanel
-              assets={assets}
-              onApplied={() => {
-                onReload();
-                onClose();
-              }}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+      <ConfirmDialog
+        open={confirmClose}
+        title="Uploads in progress"
+        description="Closing now will cancel the uploads that haven't finished."
+        confirmLabel="Cancel & close"
+        onConfirm={() => {
+          uploaderRef.current?.cancelAll();
+          setConfirmClose(false);
+          onClose();
+        }}
+        onCancel={() => setConfirmClose(false)}
+      />
+    </>
   );
 }

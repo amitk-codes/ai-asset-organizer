@@ -108,7 +108,8 @@ export function OrganizePanel({ assets, onApplied }: { assets: Asset[]; onApplie
             <input
               value={folder.name}
               onChange={(e) => renameFolder(index, e.target.value)}
-              className="w-full bg-transparent text-[15px] font-extrabold outline-none"
+              aria-label="Folder name"
+              className="focus-ring w-full rounded-lg bg-transparent px-1 text-[15px] font-extrabold outline-none"
             />
             <div className="mt-3 flex flex-wrap gap-2">
               {folder.asset_ids.map((id) => (
@@ -117,7 +118,11 @@ export function OrganizePanel({ assets, onApplied }: { assets: Asset[]; onApplie
                   className="inline-flex items-center gap-1.5 rounded-xl bg-card px-2.5 py-1 text-xs font-bold clay-sm"
                 >
                   <span className="max-w-[130px] truncate">{nameById.get(id) ?? id}</span>
-                  <button onClick={() => removeAsset(index, id)} className="hover:text-red-500">
+                  <button
+                    onClick={() => removeAsset(index, id)}
+                    aria-label={`Remove ${nameById.get(id) ?? "file"}`}
+                    className="focus-ring rounded hover:text-red-500"
+                  >
                     <X className="h-3.5 w-3.5" strokeWidth={2.5} />
                   </button>
                 </span>

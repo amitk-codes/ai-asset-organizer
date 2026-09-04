@@ -1,21 +1,29 @@
 "use client";
 
 import * as React from "react";
-import { File, FileText, Image as ImageIcon } from "lucide-react";
+import { Check, File, FileText, Image as ImageIcon } from "lucide-react";
 
 import { type Asset } from "@/lib/api";
 import { fileKind, typeMeta } from "@/lib/file-types";
 import { ShareButton } from "@/components/share-button";
-import { cn } from "@/lib/utils";
+import { cn, stripMarkdown } from "@/lib/utils";
 
 export function AssetCard({
   asset,
   onOpen,
   highlighted,
+  index = 0,
+  selected = false,
+  selectionActive = false,
+  onToggleSelect,
 }: {
   asset: Asset;
   onOpen: () => void;
   highlighted?: boolean;
+  index?: number;
+  selected?: boolean;
+  selectionActive?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
   const kind = fileKind(asset.mime_type);
@@ -33,21 +41,59 @@ export function AssetCard({
     <div
       ref={ref}
       onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open ${asset.filename}`}
+      style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
       className={cn(
-        "group cursor-pointer rounded-3xl bg-card p-3.5 transition clay clay-hover",
+        "focus-ring group fade-in-up relative cursor-pointer rounded-3xl bg-card p-3.5 transition clay clay-hover",
         highlighted && "highlight-glow",
+        selected && "ring-2 ring-primary",
       )}
     >
+      {onToggleSelect && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect();
+          }}
+          role="checkbox"
+          aria-checked={selected}
+          aria-label={selected ? "Deselect file" : "Select file"}
+          className={cn(
+            "focus-ring absolute left-5 top-5 z-10 flex h-6 w-6 items-center justify-center rounded-lg border-2 transition",
+            selected
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-white/70 bg-black/20 text-transparent opacity-0 group-hover:opacity-100",
+            selectionActive && "opacity-100",
+          )}
+        >
+          <Check className="h-4 w-4" strokeWidth={3} />
+        </button>
+      )}
+
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-muted clay-inset">
         {kind === "image" && asset.url ? (
           // signed URL from a private bucket; plain img avoids next/image domain config
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={asset.url} alt={asset.filename} className="h-full w-full object-cover" />
+          <img
+            src={asset.url}
+            alt={asset.filename}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         ) : asset.content_text ? (
           // paper preview: a snippet of the extracted text on a document-like page
-          <div className="h-full w-full overflow-hidden bg-white p-4 text-left">
-            <p className="line-clamp-6 text-[10px] leading-relaxed text-zinc-600">
-              {asset.content_text}
+          <div className="h-full w-full overflow-hidden bg-paper p-4 text-left">
+            <p className="line-clamp-6 text-[10px] leading-relaxed text-paper-foreground">
+              {stripMarkdown(asset.content_text)}
             </p>
           </div>
         ) : (
@@ -71,7 +117,9 @@ export function AssetCard({
           </span>
         </div>
         {asset.content_text && (
-          <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">{asset.content_text}</p>
+          <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">
+            {stripMarkdown(asset.content_text)}
+          </p>
         )}
       </div>
     </div>

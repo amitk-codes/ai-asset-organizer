@@ -20,6 +20,7 @@ app.include_router(folders.router)
 app.include_router(organize.router)
 app.include_router(search.router)
 app.include_router(share.router)
+app.include_router(share.shares_router)
 
 
 @app.get("/health")

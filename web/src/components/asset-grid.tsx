@@ -5,10 +5,14 @@ export function AssetGrid({
   assets,
   onOpen,
   highlightId,
+  selectedIds,
+  onToggleSelect,
 }: {
   assets: Asset[];
   onOpen: (asset: Asset) => void;
   highlightId?: string | null;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }) {
   if (assets.length === 0) {
     return (
@@ -18,14 +22,20 @@ export function AssetGrid({
     );
   }
 
+  const selectionActive = (selectedIds?.size ?? 0) > 0;
+
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {assets.map((asset) => (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      {assets.map((asset, index) => (
         <AssetCard
           key={asset.id}
           asset={asset}
+          index={index}
           onOpen={() => onOpen(asset)}
           highlighted={asset.id === highlightId}
+          selected={selectedIds?.has(asset.id) ?? false}
+          selectionActive={selectionActive}
+          onToggleSelect={onToggleSelect ? () => onToggleSelect(asset.id) : undefined}
         />
       ))}
     </div>

@@ -1,8 +1,7 @@
 "use client";
 
-import * as React from "react";
-
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export function ConfirmDialog({
   open,
@@ -19,20 +18,13 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  React.useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onCancel();
-    }
-    if (open) window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
-
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="fade-in absolute inset-0 bg-black/40" onClick={onCancel} />
-      <div className="spotlight-anim relative w-full max-w-sm rounded-3xl bg-card p-6 shadow-2xl">
+    <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
+      <DialogContent
+        title={title}
+        description={description}
+        className="max-w-sm rounded-3xl bg-card p-6 shadow-2xl"
+      >
         <h3 className="text-lg font-extrabold">{title}</h3>
         {description && <p className="mt-2 text-sm text-muted-foreground">{description}</p>}
         <div className="mt-6 flex justify-end gap-3">
@@ -43,7 +35,7 @@ export function ConfirmDialog({
             {confirmLabel}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

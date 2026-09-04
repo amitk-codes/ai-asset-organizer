@@ -8,7 +8,9 @@ export function HeaderSearch() {
   if (!config) return null;
 
   return (
-    <div className="mx-2 max-w-md flex-1">
+    // trigger hidden on mobile (search lives in the bottom tab bar); the
+    // overlay is portaled to body, so it still opens via the tab / ⌘K
+    <div className="mx-2 hidden max-w-md flex-1 md:block">
       <SpotlightSearch
         assets={config.assets}
         onOpenAsset={config.onOpenAsset}

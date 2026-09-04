@@ -4,23 +4,24 @@ import { Copy, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 
 export function KeyModal({ keyValue, onClose }: { keyValue: string | null; onClose: () => void }) {
-  if (!keyValue) return null;
-
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="fade-in absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="spotlight-anim relative w-full max-w-sm rounded-3xl bg-card p-6 shadow-2xl">
+    <Dialog open={keyValue !== null} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent
+        title="Your new key"
+        description="Save this — it's the only way back into your workspace."
+        className="max-w-sm rounded-3xl bg-card p-6 shadow-2xl"
+      >
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-extrabold">Your new key</h3>
-          <button
-            onClick={onClose}
+          <DialogClose
             aria-label="Close"
-            className="text-muted-foreground hover:text-foreground"
+            className="focus-ring rounded-lg text-muted-foreground hover:text-foreground"
           >
             <X className="h-5 w-5" strokeWidth={2.5} />
-          </button>
+          </DialogClose>
         </div>
         <p className="text-sm text-muted-foreground">
           Save this — it&apos;s the only way back into your workspace.
@@ -31,13 +32,15 @@ export function KeyModal({ keyValue, onClose }: { keyValue: string | null; onClo
         <Button
           className="mt-4 w-full"
           onClick={() => {
-            navigator.clipboard.writeText(keyValue);
-            toast.success("Key copied");
+            if (keyValue) {
+              navigator.clipboard.writeText(keyValue);
+              toast.success("Key copied");
+            }
           }}
         >
           <Copy className="h-4 w-4" /> Copy key
         </Button>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

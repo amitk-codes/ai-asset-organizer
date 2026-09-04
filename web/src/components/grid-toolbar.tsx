@@ -30,7 +30,7 @@ export function GridToolbar({
             key={t.key}
             onClick={() => onType(t.key)}
             className={cn(
-              "rounded-xl px-3.5 py-1.5 text-[13px] font-bold transition-shadow",
+              "focus-ring rounded-xl px-3.5 py-1.5 text-[13px] font-bold transition-shadow",
               type === t.key
                 ? "bg-primary text-primary-foreground clay-sm"
                 : "text-muted-foreground hover:text-foreground",
@@ -43,7 +43,8 @@ export function GridToolbar({
       <select
         value={sort}
         onChange={(e) => onSort(e.target.value as SortKey)}
-        className="rounded-2xl bg-card px-3 py-2.5 text-[13px] font-bold outline-none clay-inset"
+        aria-label="Sort files"
+        className="focus-ring rounded-2xl bg-card px-3 py-2.5 text-[13px] font-bold outline-none clay-inset"
       >
         <option value="newest">Newest</option>
         <option value="name">Name</option>
