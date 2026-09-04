@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Menu } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -14,14 +15,15 @@ import {
   type Asset,
   type Folder,
 } from "@/lib/api";
+import { UNORGANIZED } from "@/lib/constants";
+import { useSearch } from "@/lib/search-context";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AssetDetail } from "@/components/asset-detail";
 import { AssetGrid } from "@/components/asset-grid";
 import { AuthGate } from "@/components/auth-gate";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { GridToolbar, type SortKey, type TypeFilter } from "@/components/grid-toolbar";
-import { OrganizePanel } from "@/components/organize-panel";
-import { SearchBar } from "@/components/search-bar";
 import { SkeletonGrid } from "@/components/skeleton-grid";
 import { UploadModal } from "@/components/upload-modal";
 
@@ -31,11 +33,15 @@ export default function DashboardPage() {
   const [folders, setFolders] = React.useState<Folder[]>([]);
   const [selected, setSelected] = React.useState<string | null>(null);
   const [active, setActive] = React.useState<Asset | null>(null);
-  const [search, setSearch] = React.useState<Asset[] | null>(null);
   const [typeFilter, setTypeFilter] = React.useState<TypeFilter>("all");
   const [sort, setSort] = React.useState<SortKey>("newest");
   const [loading, setLoading] = React.useState(true);
   const [uploadOpen, setUploadOpen] = React.useState(false);
+  const [folderToDelete, setFolderToDelete] = React.useState<string | null>(null);
+  const [highlightId, setHighlightId] = React.useState<string | null>(null);
+  const [mobileNav, setMobileNav] = React.useState(false);
+
+  const { setConfig } = useSearch();
 
   const load = React.useCallback(async () => {
     const [nextAssets, nextFolders] = await Promise.all([listAssets(), listFolders()]);
@@ -53,14 +59,31 @@ export default function DashboardPage() {
       setLoading(false);
       return;
     }
+    // optimistic: assume the key is valid so the skeleton shows while loading
+    setAuthed(true);
     load()
-      .then(() => setAuthed(true))
       .catch(() => {
         clearKey();
         setAuthed(false);
       })
       .finally(() => setLoading(false));
   }, [load]);
+
+  const showInFolder = React.useCallback((asset: Asset) => {
+    setSelected(asset.folder_id ?? UNORGANIZED);
+    setHighlightId(asset.id);
+    window.setTimeout(() => setHighlightId(null), 5000);
+  }, []);
+
+  // publish search to the navbar while there are files to search
+  React.useEffect(() => {
+    setConfig(
+      authed && assets.length > 0
+        ? { assets, onOpenAsset: setActive, onShowInFolder: showInFolder }
+        : null,
+    );
+    return () => setConfig(null);
+  }, [assets, authed, setConfig, showInFolder]);
 
   function handleAuthed() {
     setAuthed(true);
@@ -76,7 +99,6 @@ export default function DashboardPage() {
     setAssets([]);
     setFolders([]);
     setSelected(null);
-    setSearch(null);
   }
 
   function handleCopyKey() {
@@ -97,8 +119,14 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleDeleteFolder(id: string) {
-    if (!window.confirm("Delete this folder? Its files are kept and moved out.")) return;
+  function handleDeleteFolder(id: string) {
+    setFolderToDelete(id);
+  }
+
+  async function confirmDeleteFolder() {
+    const id = folderToDelete;
+    setFolderToDelete(null);
+    if (!id) return;
     try {
       await deleteFolder(id);
       if (selected === id) setSelected(null);
@@ -112,7 +140,13 @@ export default function DashboardPage() {
   if (authed === null) return null;
   if (!authed) return <AuthGate onAuthed={handleAuthed} />;
 
-  const visible = selected ? assets.filter((asset) => asset.folder_id === selected) : assets;
+  const visible =
+    selected === null
+      ? assets
+      : selected === UNORGANIZED
+        ? assets.filter((a) => !a.folder_id)
+        : assets.filter((a) => a.folder_id === selected);
+
   const filtered = [...visible]
     .filter((asset) => {
       if (typeFilter === "image") return asset.mime_type?.startsWith("image/");
@@ -124,70 +158,76 @@ export default function DashboardPage() {
         ? a.filename.localeCompare(b.filename)
         : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
-  const title = selected
-    ? folders.find((folder) => folder.id === selected)?.name ?? "Folder"
-    : "All files";
+
+  const title =
+    selected === null
+      ? "All files"
+      : selected === UNORGANIZED
+        ? "Unorganized"
+        : folders.find((folder) => folder.id === selected)?.name ?? "Folder";
+
+  const unorganizedCount = assets.filter((asset) => !asset.folder_id).length;
+
+  const sidebarProps = {
+    folders,
+    totalCount: assets.length,
+    unorganizedCount,
+    selected,
+    onUpload: () => setUploadOpen(true),
+    onDeleteFolder: handleDeleteFolder,
+    onCopyKey: handleCopyKey,
+    onRotate: handleRotate,
+    onSignOut: handleSignOut,
+  };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)]">
-      <AppSidebar
-        folders={folders}
-        totalCount={assets.length}
-        selected={selected}
-        onSelect={setSelected}
-        onUpload={() => setUploadOpen(true)}
-        onDeleteFolder={handleDeleteFolder}
-        onCopyKey={handleCopyKey}
-        onRotate={handleRotate}
-        onSignOut={handleSignOut}
-      />
+    <div className="flex h-[calc(100vh-5rem)]">
+      <AppSidebar {...sidebarProps} onSelect={setSelected} />
 
-      <div className="min-w-0 flex-1 px-6 py-8 lg:px-10">
-        <div className="mx-auto max-w-5xl space-y-6">
+      {mobileNav && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileNav(false)} />
+          <div className="relative h-full w-72 bg-background">
+            <AppSidebar
+              {...sidebarProps}
+              className="flex"
+              onSelect={(id) => {
+                setSelected(id);
+                setMobileNav(false);
+              }}
+              onUpload={() => {
+                setMobileNav(false);
+                setUploadOpen(true);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="h-full min-w-0 flex-1 overflow-y-auto px-5 py-8 lg:px-12 lg:py-10">
+        <div className="mx-auto max-w-6xl space-y-8">
+          <button
+            onClick={() => setMobileNav(true)}
+            className="flex items-center gap-2 rounded-2xl bg-card px-4 py-2.5 text-sm font-bold clay-sm clay-press md:hidden"
+          >
+            <Menu className="h-4 w-4" strokeWidth={2.5} /> Folders
+          </button>
+
           {loading ? (
             <SkeletonGrid />
           ) : assets.length === 0 ? (
             <EmptyState onUpload={() => setUploadOpen(true)} />
           ) : (
-            <>
-              <SearchBar assets={assets} onResults={setSearch} />
-
-              {search !== null ? (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-semibold">
-                    Search results{" "}
-                    <span className="font-normal text-muted-foreground">· {search.length}</span>
-                  </h2>
-                  {search.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
-                      No strong matches. Try different words.
-                    </div>
-                  ) : (
-                    <AssetGrid assets={search} onOpen={setActive} />
-                  )}
-                </div>
-              ) : (
-                <>
-                  <OrganizePanel assets={assets} onApplied={reload} />
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <h2 className="text-lg font-semibold">
-                        {title}{" "}
-                        <span className="font-normal text-muted-foreground">· {filtered.length}</span>
-                      </h2>
-                      <GridToolbar
-                        type={typeFilter}
-                        onType={setTypeFilter}
-                        sort={sort}
-                        onSort={setSort}
-                      />
-                    </div>
-                    <AssetGrid assets={filtered} onOpen={setActive} />
-                  </div>
-                </>
-              )}
-            </>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-xl font-extrabold">
+                  {title}{" "}
+                  <span className="font-normal text-muted-foreground">· {filtered.length}</span>
+                </h2>
+                <GridToolbar type={typeFilter} onType={setTypeFilter} sort={sort} onSort={setSort} />
+              </div>
+              <AssetGrid assets={filtered} onOpen={setActive} highlightId={highlightId} />
+            </div>
           )}
         </div>
       </div>
@@ -203,7 +243,21 @@ export default function DashboardPage() {
         }}
       />
 
-      <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} onUploaded={reload} />
+      <UploadModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onReload={reload}
+        assets={assets}
+      />
+
+      <ConfirmDialog
+        open={folderToDelete !== null}
+        title="Delete folder?"
+        description="The files inside are kept and moved out of the folder."
+        confirmLabel="Delete"
+        onConfirm={confirmDeleteFolder}
+        onCancel={() => setFolderToDelete(null)}
+      />
     </div>
   );
 }

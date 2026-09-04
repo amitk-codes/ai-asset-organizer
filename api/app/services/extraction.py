@@ -3,13 +3,15 @@ import io
 from google.genai import types
 from pypdf import PdfReader
 
-from app.gemini_client import get_gemini
+from app.gemini_client import get_gemini, with_retry
 
-VISION_MODEL = "gemini-flash-latest"
+VISION_MODEL = "gemini-flash-lite-latest"
 
 _IMAGE_PROMPT = (
-    "Describe this image for a file organizer. In 2-3 sentences cover what it shows, "
-    "any visible text, and what kind of content it is (e.g. invoice, screenshot, photo, diagram)."
+    "Describe this image so it can be found later by search. Include: what it shows; the kind of "
+    "document or content it is (e.g. invoice, receipt, screenshot, photo, chart, ID card, form, "
+    "diagram); any visible text verbatim (names, dates, amounts, titles); and 3-6 relevant keywords. "
+    "Be concise but specific."
 )
 
 
@@ -27,12 +29,14 @@ def extract_content(data: bytes, mime_type: str | None) -> str:
 
 def _describe_image(data: bytes, mime_type: str) -> str:
     client = get_gemini()
-    response = client.models.generate_content(
-        model=VISION_MODEL,
-        contents=[
-            types.Part.from_bytes(data=data, mime_type=mime_type),
-            _IMAGE_PROMPT,
-        ],
+    response = with_retry(
+        lambda: client.models.generate_content(
+            model=VISION_MODEL,
+            contents=[
+                types.Part.from_bytes(data=data, mime_type=mime_type),
+                _IMAGE_PROMPT,
+            ],
+        )
     )
     return (response.text or "").strip()
 

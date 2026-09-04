@@ -72,27 +72,27 @@ export function AssetDetail({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
-      <div className="relative flex h-full w-full max-w-md flex-col border-l border-border bg-background shadow-xl">
-        <div className="flex items-center justify-between gap-3 border-b border-border p-4">
-          <h3 className="min-w-0 truncate font-semibold">{asset.filename}</h3>
+      <div className="relative flex h-full w-full max-w-md flex-col bg-background">
+        <div className="flex items-center justify-between gap-3 p-5">
+          <h3 className="min-w-0 truncate text-lg font-extrabold">{asset.filename}</h3>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="shrink-0 text-muted-foreground hover:text-foreground"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-card text-muted-foreground clay-sm clay-press hover:text-foreground"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" strokeWidth={2.5} />
           </button>
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto p-4">
-          <div className="overflow-hidden rounded-lg border border-border bg-muted">
+        <div className="flex-1 space-y-6 overflow-y-auto px-5 pb-5">
+          <div className="overflow-hidden rounded-3xl bg-muted clay-inset">
             {isImage && asset.url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={asset.url} alt={asset.filename} className="max-h-72 w-full object-contain" />
             ) : (
-              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-40 items-center justify-center text-sm font-semibold text-muted-foreground">
                 {asset.mime_type ?? "file"}
               </div>
             )}
@@ -100,14 +100,14 @@ export function AssetDetail({
 
           {asset.content_text && (
             <div>
-              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="mb-2 text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
                 What this is
               </p>
-              <p className="text-sm leading-relaxed">{asset.content_text}</p>
+              <p className="text-[15px] leading-relaxed">{asset.content_text}</p>
             </div>
           )}
 
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3.5 text-[15px]">
             <Meta label="Type" value={asset.mime_type ?? "—"} />
             <Meta label="Size" value={formatSize(asset.size_bytes)} />
             <Meta label="Added" value={new Date(asset.created_at).toLocaleDateString()} />
@@ -116,7 +116,7 @@ export function AssetDetail({
               <select
                 value={folderId ?? ""}
                 onChange={(e) => handleMove(e.target.value || null)}
-                className="rounded-md border border-border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="rounded-xl bg-card px-3 py-2 text-sm font-bold text-foreground outline-none clay-inset"
               >
                 <option value="">Unorganized</option>
                 {folders.map((f) => (
@@ -129,13 +129,13 @@ export function AssetDetail({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 border-t border-border p-4">
+        <div className="flex items-center gap-3 p-5">
           {asset.url && (
             <a
               href={asset.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={buttonVariants({ variant: "outline" })}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Open <ExternalLink className="h-4 w-4" />
             </a>
@@ -144,13 +144,11 @@ export function AssetDetail({
           <button
             onClick={handleDelete}
             className={cn(
-              "ml-auto flex items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors",
-              confirming
-                ? "bg-red-500/10 text-red-500"
-                : "text-muted-foreground hover:text-red-500",
+              "ml-auto flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-bold transition-shadow clay-sm clay-press",
+              confirming ? "bg-red-500 text-white" : "bg-card text-red-500",
             )}
           >
-            <Trash2 className="h-4 w-4" /> {confirming ? "Confirm?" : "Delete"}
+            <Trash2 className="h-4 w-4" strokeWidth={2.5} /> {confirming ? "Confirm?" : "Delete"}
           </button>
         </div>
       </div>
@@ -162,7 +160,7 @@ function Meta({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="min-w-0 truncate text-right">{value}</span>
+      <span className="min-w-0 truncate text-right font-bold">{value}</span>
     </div>
   );
 }

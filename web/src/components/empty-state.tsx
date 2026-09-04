@@ -10,26 +10,26 @@ const steps = [
 
 export function EmptyState({ onUpload }: { onUpload: () => void }) {
   return (
-    <div className="mx-auto max-w-2xl py-6 text-center">
-      <h2 className="text-2xl font-bold tracking-tight">Start by uploading your files</h2>
-      <p className="mt-2 text-muted-foreground">
+    <div className="mx-auto max-w-3xl py-10 text-center">
+      <h2 className="text-3xl font-extrabold tracking-tight">Start by uploading your files</h2>
+      <p className="mt-3 text-base text-muted-foreground">
         Three steps to an organized, searchable library.
       </p>
 
-      <div className="my-8 grid gap-3 sm:grid-cols-3">
+      <div className="my-10 grid gap-5 sm:grid-cols-3">
         {steps.map((step) => (
-          <div key={step.title} className="rounded-lg border border-border bg-card p-4 text-left">
-            <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <step.icon className="h-5 w-5" />
+          <div key={step.title} className="rounded-3xl bg-card p-6 text-left clay">
+            <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-violet-500/30">
+              <step.icon className="h-6 w-6" strokeWidth={2.5} />
             </span>
-            <h3 className="text-sm font-semibold">{step.title}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">{step.desc}</p>
+            <h3 className="text-base font-extrabold">{step.title}</h3>
+            <p className="mt-1.5 text-sm text-muted-foreground">{step.desc}</p>
           </div>
         ))}
       </div>
 
       <Button onClick={onUpload}>
-        <Upload className="h-4 w-4" /> Upload files
+        <Upload className="h-5 w-5" strokeWidth={2.5} /> Upload files
       </Button>
     </div>
   );

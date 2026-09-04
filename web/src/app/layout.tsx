@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SearchProvider } from "@/lib/search-context";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/toaster";
 
@@ -28,10 +29,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <div aria-hidden className="app-backdrop pointer-events-none fixed inset-0 -z-10" />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <Toaster />
+          <SearchProvider>
+            <SiteHeader />
+            <main className="flex-1">{children}</main>
+            <Toaster />
+          </SearchProvider>
         </ThemeProvider>
       </body>
     </html>

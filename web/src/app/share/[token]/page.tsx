@@ -11,12 +11,14 @@ export default function SharePage() {
   const [error, setError] = React.useState(false);
 
   React.useEffect(() => {
-    getShare(params.token).then(setData).catch(() => setError(true));
+    getShare(params.token)
+      .then(setData)
+      .catch(() => setError(true));
   }, [params.token]);
 
   if (error) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-20 text-center text-muted-foreground">
+      <div className="mx-auto max-w-3xl px-6 py-24 text-center font-semibold text-muted-foreground">
         This share link is invalid or has expired.
       </div>
     );
@@ -24,7 +26,9 @@ export default function SharePage() {
 
   if (!data) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-20 text-center text-muted-foreground">Loading…</div>
+      <div className="mx-auto max-w-3xl px-6 py-24 text-center font-semibold text-muted-foreground">
+        Loading…
+      </div>
     );
   }
 
@@ -32,30 +36,33 @@ export default function SharePage() {
   const title = data.type === "folder" ? data.folder.name : data.asset.filename;
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-      <p className="mt-1 text-sm capitalize text-muted-foreground">Shared {data.type}</p>
+    <div className="mx-auto max-w-5xl px-6 py-12">
+      <h1 className="text-3xl font-extrabold tracking-tight">{title}</h1>
+      <p className="mt-1.5 text-sm font-semibold capitalize text-muted-foreground">
+        Shared {data.type}
+      </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {assets.map((asset) => (
-          <div key={asset.id} className="overflow-hidden rounded-lg border border-border bg-card">
-            {asset.mime_type?.startsWith("image/") && asset.url ? (
-              // signed URL from a private bucket; plain img avoids next/image domain config
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={asset.url} alt={asset.filename} className="h-40 w-full object-cover" />
-            ) : (
-              <div className="flex h-40 items-center justify-center bg-muted px-3 text-center text-sm text-muted-foreground">
-                {asset.filename}
-              </div>
-            )}
-            <div className="p-3">
-              <p className="truncate text-sm font-medium">{asset.filename}</p>
+          <div key={asset.id} className="rounded-3xl bg-card p-3.5 clay">
+            <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-muted clay-inset">
+              {asset.mime_type?.startsWith("image/") && asset.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={asset.url} alt={asset.filename} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center px-3 text-center text-sm font-semibold text-muted-foreground">
+                  {asset.filename}
+                </div>
+              )}
+            </div>
+            <div className="px-1.5 pb-1 pt-3.5">
+              <p className="truncate text-[15px] font-extrabold">{asset.filename}</p>
               {asset.url && (
                 <a
                   href={asset.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline"
+                  className="text-xs font-bold text-primary hover:underline"
                 >
                   Open
                 </a>

@@ -23,16 +23,16 @@ export function GridToolbar({
   onSort: (sort: SortKey) => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex rounded-md border border-border p-0.5">
+    <div className="flex items-center gap-2.5">
+      <div className="flex rounded-2xl bg-card p-1.5 clay-inset">
         {TYPES.map((t) => (
           <button
             key={t.key}
             onClick={() => onType(t.key)}
             className={cn(
-              "rounded px-2.5 py-1 text-xs transition-colors",
+              "rounded-xl px-3.5 py-1.5 text-[13px] font-bold transition-shadow",
               type === t.key
-                ? "bg-muted font-medium text-foreground"
+                ? "bg-primary text-primary-foreground clay-sm"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -43,7 +43,7 @@ export function GridToolbar({
       <select
         value={sort}
         onChange={(e) => onSort(e.target.value as SortKey)}
-        className="rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
+        className="rounded-2xl bg-card px-3 py-2.5 text-[13px] font-bold outline-none clay-inset"
       >
         <option value="newest">Newest</option>
         <option value="name">Name</option>

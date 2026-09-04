@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 import { applyOrganization, suggestFolders, type Asset, type FolderPlan } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 export function OrganizePanel({ assets, onApplied }: { assets: Asset[]; onApplied: () => void }) {
   const [plan, setPlan] = React.useState<FolderPlan[] | null>(null);
@@ -63,53 +62,68 @@ export function OrganizePanel({ assets, onApplied }: { assets: Asset[]; onApplie
 
   if (!plan) {
     return (
-      <Button onClick={suggest} disabled={loading || unorganizedCount === 0}>
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-        Organize with AI
-      </Button>
+      <div className="flex flex-wrap items-center gap-4 rounded-3xl bg-card p-5 clay">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-violet-500/30">
+          <Sparkles className="h-6 w-6" strokeWidth={2.5} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-base font-extrabold">Organize your new files</p>
+          <p className="text-sm text-muted-foreground">
+            {unorganizedCount} file{unorganizedCount > 1 ? "s" : ""} ready — let AI sort them into folders.
+          </p>
+        </div>
+        <Button onClick={suggest} disabled={loading}>
+          {loading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Sparkles className="h-5 w-5" strokeWidth={2.5} />
+          )}
+          Organize with AI
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 rounded-3xl bg-card p-6 clay">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-semibold">Suggested folders</h2>
+          <h2 className="text-lg font-extrabold">Suggested folders</h2>
           <p className="text-sm text-muted-foreground">Review and edit, then apply.</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setPlan(null)}>
+        <div className="flex gap-3">
+          <Button variant="outline" size="sm" onClick={() => setPlan(null)}>
             Cancel
           </Button>
-          <Button onClick={apply} disabled={applying}>
+          <Button size="sm" onClick={apply} disabled={applying}>
             {applying && <Loader2 className="h-4 w-4 animate-spin" />}
             Apply
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         {plan.map((folder, index) => (
-          <Card key={index} className="p-4">
+          <div key={index} className="rounded-2xl bg-muted p-4 clay-inset">
             <input
               value={folder.name}
               onChange={(e) => renameFolder(index, e.target.value)}
-              className="w-full rounded-md bg-transparent text-sm font-semibold outline-none focus:ring-2 focus:ring-ring"
+              className="w-full bg-transparent text-[15px] font-extrabold outline-none"
             />
-            <div className="mt-3 flex flex-wrap gap-1.5">
+            <div className="mt-3 flex flex-wrap gap-2">
               {folder.asset_ids.map((id) => (
                 <span
                   key={id}
-                  className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-card px-2.5 py-1 text-xs font-bold clay-sm"
                 >
-                  <span className="max-w-[140px] truncate">{nameById.get(id) ?? id}</span>
-                  <button onClick={() => removeAsset(index, id)} className="hover:text-foreground">
-                    <X className="h-3 w-3" />
+                  <span className="max-w-[130px] truncate">{nameById.get(id) ?? id}</span>
+                  <button onClick={() => removeAsset(index, id)} className="hover:text-red-500">
+                    <X className="h-3.5 w-3.5" strokeWidth={2.5} />
                   </button>
                 </span>
               ))}
             </div>
-          </Card>
+          </div>
         ))}
       </div>
     </div>

@@ -15,7 +15,7 @@ class SearchRequest(BaseModel):
 
 @router.post("")
 def search(request: SearchRequest, user_id: str = Depends(get_user_id)):
-    embedding = embed_text(request.query)
+    embedding = embed_text(request.query, task_type="RETRIEVAL_QUERY")
     if embedding is None:
         return {"results": []}
 

@@ -46,16 +46,16 @@ export function AuthGate({ onAuthed }: { onAuthed: () => void }) {
 
   if (generated) {
     return (
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-6">
-        <div className="rounded-lg border border-border bg-card p-6 text-center">
-          <h1 className="text-xl font-bold">Save your key</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-md flex-col justify-center px-6">
+        <div className="rounded-3xl bg-card p-8 text-center clay">
+          <h1 className="text-2xl font-extrabold">Save your key</h1>
+          <p className="mt-2.5 text-sm text-muted-foreground">
             This is the only way back into your workspace. Store it somewhere safe.
           </p>
-          <code className="mt-5 block break-all rounded-md bg-muted px-3 py-3 text-sm">
+          <code className="mt-6 block break-all rounded-2xl bg-muted px-4 py-4 text-sm font-bold clay-inset">
             {generated}
           </code>
-          <div className="mt-4 flex gap-2">
+          <div className="mt-6 flex gap-3">
             <Button
               variant="outline"
               className="flex-1"
@@ -76,30 +76,31 @@ export function AuthGate({ onAuthed }: { onAuthed: () => void }) {
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-6">
-      <div className="rounded-lg border border-border bg-card p-6">
-        <span className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Sparkles className="h-5 w-5" />
+    <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-md flex-col justify-center px-6">
+      <div className="rounded-3xl bg-card p-8 clay">
+        <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-violet-500/30">
+          <Sparkles className="h-6 w-6" strokeWidth={2.5} />
         </span>
-        <h1 className="text-xl font-bold">Your workspace</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-2xl font-extrabold">Your workspace</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Enter your key to sign in, or generate a new one.
         </p>
 
-        <form onSubmit={handleLogin} className="mt-5 space-y-3">
+        <form onSubmit={handleLogin} className="mt-6 space-y-3.5">
           <input
             value={keyInput}
             onChange={(e) => setKeyInput(e.target.value)}
             placeholder="key_…"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-2xl bg-muted px-4 py-3 text-[15px] font-semibold outline-none clay-inset placeholder:font-medium placeholder:text-muted-foreground"
           />
           <Button type="submit" className="w-full" disabled={busy || !keyInput.trim()}>
             {busy && <Loader2 className="h-4 w-4 animate-spin" />} Sign in
           </Button>
         </form>
 
-        <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+        <div className="my-5 flex items-center gap-3 text-xs font-bold text-muted-foreground">
+          <span className="h-0.5 flex-1 rounded bg-border" /> OR{" "}
+          <span className="h-0.5 flex-1 rounded bg-border" />
         </div>
 
         <Button variant="outline" className="w-full" onClick={handleGenerate} disabled={busy}>
