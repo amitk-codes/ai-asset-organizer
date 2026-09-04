@@ -39,6 +39,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#e9e5f8" },
     { media: "(prefers-color-scheme: dark)", color: "#23203a" },
@@ -52,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col overflow-x-hidden">
         <a
           href="#main"
           className="focus-ring sr-only rounded-xl bg-card px-4 py-2 font-bold focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200]"

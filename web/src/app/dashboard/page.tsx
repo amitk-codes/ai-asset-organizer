@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Menu } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -30,8 +30,10 @@ import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { GridToolbar, type SortKey, type TypeFilter } from "@/components/grid-toolbar";
 import { KeyModal } from "@/components/key-modal";
+import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { ShareManager } from "@/components/share-manager";
 import { SkeletonGrid } from "@/components/skeleton-grid";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { UploadModal } from "@/components/upload-modal";
 
 const PAGE_SIZE = 60;
@@ -77,10 +79,11 @@ export default function DashboardPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [highlightId, setHighlightId] = React.useState<string | null>(null);
-  const [mobileNav, setMobileNav] = React.useState(false);
+  const [foldersSheet, setFoldersSheet] = React.useState(false);
+  const [menuSheet, setMenuSheet] = React.useState(false);
   const [newKey, setNewKey] = React.useState<string | null>(null);
 
-  const { setConfig } = useSearch();
+  const { setConfig, openSearch } = useSearch();
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const sentinelRef = React.useRef<HTMLDivElement>(null);
 
@@ -322,38 +325,11 @@ export default function DashboardPage() {
     <div className="flex h-[calc(100dvh-5rem)]">
       <AppSidebar {...sidebarProps} onSelect={setSelected} />
 
-      {mobileNav && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="fade-in absolute inset-0 bg-black/40" onClick={() => setMobileNav(false)} />
-          <div className="slide-in-left relative h-full w-72 bg-background">
-            <AppSidebar
-              {...sidebarProps}
-              className="flex"
-              onSelect={(id) => {
-                setSelected(id);
-                setMobileNav(false);
-              }}
-              onUpload={() => {
-                setMobileNav(false);
-                setUploadOpen(true);
-              }}
-            />
-          </div>
-        </div>
-      )}
-
       <div
         ref={scrollRef}
         className="h-full min-w-0 flex-1 overflow-y-auto px-5 py-8 lg:px-12 lg:py-10"
       >
         <div className="mx-auto max-w-7xl space-y-8">
-          <button
-            onClick={() => setMobileNav(true)}
-            className="focus-ring flex items-center gap-2 rounded-2xl bg-card px-4 py-2.5 text-sm font-bold clay-sm clay-press md:hidden"
-          >
-            <Menu className="h-4 w-4" strokeWidth={2.5} /> Folders
-          </button>
-
           {loading ? (
             <SkeletonGrid />
           ) : loadError ? (
@@ -392,6 +368,8 @@ export default function DashboardPage() {
               )}
             </div>
           )}
+          {/* clears the fixed mobile tab bar */}
+          <div className="pb-tabbar md:hidden" aria-hidden />
         </div>
       </div>
 
@@ -456,6 +434,56 @@ export default function DashboardPage() {
         onConfirm={confirmBulkDelete}
         onCancel={() => setBulkDeleteOpen(false)}
       />
+
+      {/* mobile bottom navigation */}
+      <MobileTabBar
+        active={selected === null ? "files" : "folders"}
+        onFiles={() => {
+          setSelected(null);
+          scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onSearch={openSearch}
+        onUpload={() => setUploadOpen(true)}
+        onFolders={() => setFoldersSheet(true)}
+        onMenu={() => setMenuSheet(true)}
+      />
+
+      <Dialog open={foldersSheet} onOpenChange={(next) => !next && setFoldersSheet(false)}>
+        <DialogContent variant="drawer-left" title="Folders" className="max-w-[20rem] bg-background">
+          <AppSidebar
+            {...sidebarProps}
+            sections={["nav", "folders"]}
+            className="flex w-full"
+            onSelect={(id) => {
+              setSelected(id);
+              setFoldersSheet(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={menuSheet} onOpenChange={(next) => !next && setMenuSheet(false)}>
+        <DialogContent variant="drawer-left" title="Menu" className="max-w-[20rem] bg-background">
+          <AppSidebar
+            {...sidebarProps}
+            sections={["account", "brand"]}
+            className="flex w-full"
+            onSelect={setSelected}
+            onManageShares={() => {
+              setMenuSheet(false);
+              setSharesOpen(true);
+            }}
+            onRotate={() => {
+              setMenuSheet(false);
+              setRotateConfirm(true);
+            }}
+            onSignOut={() => {
+              setMenuSheet(false);
+              handleSignOut();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

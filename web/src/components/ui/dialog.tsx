@@ -14,13 +14,14 @@ export const Dialog = RadixDialog.Root;
 export const DialogTrigger = RadixDialog.Trigger;
 export const DialogClose = RadixDialog.Close;
 
-type Variant = "center" | "drawer" | "top";
+type Variant = "center" | "drawer" | "drawer-left" | "top";
 
 const VARIANT_CLASS: Record<Variant, string> = {
   center:
-    "spotlight-anim fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full -translate-x-1/2 -translate-y-1/2 overflow-y-auto outline-none",
-  drawer: "slide-in-right fixed right-0 top-0 z-50 flex h-full w-full flex-col outline-none",
-  top: "spotlight-anim fixed left-1/2 top-[14vh] z-[100] w-full -translate-x-1/2 px-4 outline-none",
+    "anim-center fixed left-1/2 top-1/2 z-50 max-h-[85dvh] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto outline-none",
+  drawer: "anim-drawer fixed right-0 top-0 z-50 flex h-full w-full flex-col outline-none",
+  "drawer-left": "anim-drawer-left fixed left-0 top-0 z-50 flex h-full w-full flex-col outline-none",
+  top: "anim-top fixed left-1/2 top-[14vh] z-[100] w-full -translate-x-1/2 px-4 outline-none",
 };
 
 export function DialogContent({
@@ -41,7 +42,7 @@ export function DialogContent({
   return (
     <RadixDialog.Portal>
       <RadixDialog.Overlay
-        className={cn("fade-in fixed inset-0 z-50 bg-black/40", overlayClassName)}
+        className={cn("anim-overlay fixed inset-0 z-50 bg-black/40", overlayClassName)}
       />
       <RadixDialog.Content className={cn(VARIANT_CLASS[variant], className)} {...props}>
         <RadixDialog.Title className="sr-only">{title}</RadixDialog.Title>

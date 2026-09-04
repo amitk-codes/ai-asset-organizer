@@ -6,11 +6,13 @@ export function Logo() {
       <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-violet-500/30">
         <Sparkles className="h-5 w-5" strokeWidth={2.5} />
       </span>
-      <span className="hidden leading-tight sm:block">
-        <span className="block text-base font-extrabold tracking-tight">
+      <span className="block leading-tight">
+        <span className="block text-sm font-extrabold tracking-tight sm:text-base">
           <span className="text-primary">AI</span> Asset Organizer
         </span>
-        <span className="block text-xs font-semibold text-muted-foreground">by Amit Kumar</span>
+        <span className="block text-[11px] font-semibold text-muted-foreground sm:text-xs">
+          by Amit Kumar
+        </span>
       </span>
     </span>
   );

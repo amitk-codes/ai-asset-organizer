@@ -17,7 +17,7 @@ SIGNED_URL_TTL = 3600  # seconds
 class ShareRequest(BaseModel):
     target_type: str  # 'folder' or 'asset'
     target_id: str
-    expires_in_days: int | None = None  # null = never expires
+    expires_in_hours: int | None = None  # null = never expires
 
 
 @router.post("")
@@ -38,9 +38,9 @@ def create_share(request: ShareRequest, user_id: str = Depends(get_user_id)):
         raise HTTPException(status_code=404, detail="not found")
 
     expires_at = None
-    if request.expires_in_days and request.expires_in_days > 0:
+    if request.expires_in_hours and request.expires_in_hours > 0:
         expires_at = (
-            datetime.now(timezone.utc) + timedelta(days=request.expires_in_days)
+            datetime.now(timezone.utc) + timedelta(hours=request.expires_in_hours)
         ).isoformat()
 
     inserted = (
@@ -66,6 +66,7 @@ def list_shares(user_id: str = Depends(get_user_id)):
         supabase.table("shares")
         .select("id, target_type, target_id, created_at, expires_at, revoked")
         .eq("user_id", user_id)
+        .eq("revoked", False)  # revoked links disappear from the list
         .order("created_at", desc=True)
         .execute()
     )

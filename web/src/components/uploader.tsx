@@ -11,7 +11,7 @@ const MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 const ACCEPTED = ["image/", "application/pdf", "text/"];
 
 type Status = "uploading" | "done" | "error" | "skipped";
-type Item = { name: string; status: Status; reason?: string };
+type Item = { name: string; status: Status; reason?: string; progress?: number };
 
 function accepted(file: File): boolean {
   return ACCEPTED.some((prefix) => file.type.startsWith(prefix));
@@ -31,16 +31,25 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
     const initial: Item[] = files.map((file) => {
       if (!accepted(file)) return { name: file.name, status: "skipped", reason: "Unsupported type" };
       if (file.size > MAX_BYTES) return { name: file.name, status: "skipped", reason: "Over 25 MB" };
-      return { name: file.name, status: "uploading" };
+      return { name: file.name, status: "uploading", progress: 0 };
     });
     setItems(initial);
     setBusy(true);
 
+    const patch = (i: number, next: Partial<Item>) =>
+      setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, ...next } : it)));
+
     const uploads: Promise<Item>[] = files.map((file, i) => {
       if (initial[i].status === "skipped") return Promise.resolve(initial[i]);
-      return uploadAsset(file)
-        .then((): Item => ({ name: file.name, status: "done" }))
-        .catch((): Item => ({ name: file.name, status: "error", reason: "Failed" }));
+      return uploadAsset(file, (pct) => patch(i, { progress: pct }))
+        .then((): Item => {
+          patch(i, { status: "done", progress: 100 });
+          return { name: file.name, status: "done", progress: 100 };
+        })
+        .catch((): Item => {
+          patch(i, { status: "error", reason: "Failed" });
+          return { name: file.name, status: "error", reason: "Failed" };
+        });
     });
 
     const settled = await Promise.all(uploads);
@@ -113,14 +122,27 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
       {items.length > 0 && (
         <ul className="space-y-1.5">
           {items.map((item, i) => (
-            <li
-              key={`${item.name}-${i}`}
-              className="flex items-center gap-2.5 rounded-xl bg-card px-3 py-2 text-sm clay-sm"
-            >
-              <StatusIcon status={item.status} />
-              <span className="min-w-0 flex-1 truncate font-semibold">{item.name}</span>
-              {item.reason && (
-                <span className="shrink-0 text-xs font-bold text-muted-foreground">{item.reason}</span>
+            <li key={`${item.name}-${i}`} className="rounded-xl bg-card px-3 py-2 clay-sm">
+              <div className="flex items-center gap-2.5 text-sm">
+                <StatusIcon status={item.status} />
+                <span className="min-w-0 flex-1 truncate font-semibold">{item.name}</span>
+                {item.status === "uploading" ? (
+                  <span className="shrink-0 text-xs font-bold tabular-nums text-muted-foreground">
+                    {item.progress ?? 0}%
+                  </span>
+                ) : item.reason ? (
+                  <span className="shrink-0 text-xs font-bold text-muted-foreground">
+                    {item.reason}
+                  </span>
+                ) : null}
+              </div>
+              {item.status === "uploading" && (
+                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-150"
+                    style={{ width: `${item.progress ?? 0}%` }}
+                  />
+                </div>
               )}
             </li>
           ))}

@@ -88,6 +88,15 @@ body {
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
 }
 
+/* safe-area helpers for the mobile bottom tab bar (handles iOS home indicator
+   and browsers whose address bar sits at the bottom) */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.h-tabbar { height: calc(4rem + env(safe-area-inset-bottom, 0px)); }
+/* content clears the fixed tab bar (mobile only) */
+.pb-tabbar { padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px)); }
+/* floating things (bulk bar, toasts) sit above the tab bar on mobile */
+.bottom-above-tabbar { bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px)); }
+
 /* claymorphism: soft puffy dual-shadow (raised) + inset (pressed) */
 .clay {
   box-shadow: 7px 7px 16px var(--clay-dark), -7px -7px 16px var(--clay-light);
@@ -120,6 +129,35 @@ body {
   to { opacity: 1; }
 }
 .fade-in { animation: fade-in 0.16s ease-out; }
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes spotlight-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-10px) scale(0.97); }
+}
+@keyframes slide-out-right {
+  from { transform: none; }
+  to { transform: translateX(100%); }
+}
+@keyframes slide-out-left {
+  from { transform: none; }
+  to { transform: translateX(-100%); }
+}
+
+/* Radix drives these via data-state; it delays unmount until the exit finishes */
+.anim-overlay[data-state="open"] { animation: fade-in 0.18s ease-out; }
+.anim-overlay[data-state="closed"] { animation: fade-out 0.16s ease-in forwards; }
+.anim-center[data-state="open"] { animation: spotlight-in 0.18s ease-out; }
+.anim-center[data-state="closed"] { animation: spotlight-out 0.16s ease-in forwards; }
+.anim-top[data-state="open"] { animation: spotlight-in 0.18s ease-out; }
+.anim-top[data-state="closed"] { animation: spotlight-out 0.16s ease-in forwards; }
+.anim-drawer[data-state="open"] { animation: slide-in-right 0.24s cubic-bezier(0.32, 0.72, 0, 1); }
+.anim-drawer[data-state="closed"] { animation: slide-out-right 0.2s ease-in forwards; }
+.anim-drawer-left[data-state="open"] { animation: slide-in-left 0.24s cubic-bezier(0.32, 0.72, 0, 1); }
+.anim-drawer-left[data-state="closed"] { animation: slide-out-left 0.2s ease-in forwards; }
 
 @keyframes glow-pulse {
   0%, 100% {

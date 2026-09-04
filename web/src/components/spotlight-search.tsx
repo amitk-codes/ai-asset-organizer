@@ -5,6 +5,7 @@ import { File, FileText, FolderOpen, Image as ImageIcon, Loader2, Search } from 
 
 import { searchAssets, type Asset } from "@/lib/api";
 import { fileKind } from "@/lib/file-types";
+import { useSearch } from "@/lib/search-context";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,13 @@ export function SpotlightSearch({
   const [loading, setLoading] = React.useState(false);
   const [activeIndex, setActiveIndex] = React.useState(0);
   const byId = React.useMemo(() => new Map(assets.map((a) => [a.id, a])), [assets]);
+  const { registerOpener } = useSearch();
+
+  // let external triggers (e.g. the mobile Search tab) open the spotlight
+  React.useEffect(() => {
+    registerOpener(() => setOpen(true));
+    return () => registerOpener(null);
+  }, [registerOpener]);
 
   // ⌘K / Ctrl-K opens the spotlight from anywhere
   React.useEffect(() => {

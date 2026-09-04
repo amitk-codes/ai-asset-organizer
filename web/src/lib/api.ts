@@ -107,14 +107,37 @@ export async function listAssets(opts?: {
   return res.json();
 }
 
-export async function uploadAsset(file: File): Promise<Asset> {
-  const form = new FormData();
-  form.append("file", file);
-  const res = await ensureOk(
-    await fetch(`${BASE}/assets`, { method: "POST", body: form, headers: authHeaders() }),
-    "Upload failed",
-  );
-  return res.json();
+// XHR (not fetch) so we can report real upload progress
+export function uploadAsset(file: File, onProgress?: (pct: number) => void): Promise<Asset> {
+  return new Promise<Asset>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${BASE}/assets`);
+    const key = getKey();
+    if (key) xhr.setRequestHeader("X-Api-Key", key);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText) as Asset);
+        } catch {
+          reject(new ApiError(xhr.status, "Malformed response"));
+        }
+      } else {
+        reject(new ApiError(xhr.status, "Upload failed"));
+      }
+    };
+    xhr.onerror = () => reject(new ApiError(0, "Network error"));
+    xhr.onabort = () => reject(new ApiError(0, "Upload aborted"));
+
+    const form = new FormData();
+    form.append("file", file);
+    xhr.send(form);
+  });
 }
 
 export async function moveAsset(assetId: string, folderId: string | null): Promise<Asset> {
@@ -236,7 +259,7 @@ export type ShareRecord = Share & {
 export async function createShare(
   targetType: "folder" | "asset",
   targetId: string,
-  opts?: { expiresInDays?: number },
+  opts?: { expiresInHours?: number | null },
 ): Promise<Share> {
   const res = await ensureOk(
     await fetch(`${BASE}/share`, {
@@ -245,7 +268,7 @@ export async function createShare(
       body: JSON.stringify({
         target_type: targetType,
         target_id: targetId,
-        expires_in_days: opts?.expiresInDays ?? null,
+        expires_in_hours: opts?.expiresInHours ?? null,
       }),
     }),
     "Failed to create share",

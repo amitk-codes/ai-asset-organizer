@@ -21,7 +21,7 @@ export function BulkBar({
   if (count === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
+    <div className="bottom-above-tabbar fixed inset-x-0 z-40 flex justify-center px-4 md:bottom-6">
       <div className="fade-in flex flex-wrap items-center gap-3 rounded-3xl bg-card px-4 py-3 shadow-2xl clay">
         <span className="text-sm font-extrabold">
           {count} selected

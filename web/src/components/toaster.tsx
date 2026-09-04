@@ -10,6 +10,8 @@ export function Toaster() {
       theme={resolvedTheme === "dark" ? "dark" : "light"}
       position="bottom-right"
       richColors
+      // keep toasts above the mobile bottom tab bar + safe area
+      mobileOffset={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
     />
   );
 }

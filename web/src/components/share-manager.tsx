@@ -105,8 +105,9 @@ function ShareList({ assets, folders }: { assets: Asset[]; folders: Folder[] }) 
         <li key={share.id} className="flex items-center gap-3 rounded-2xl bg-muted p-3 clay-inset">
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold">{label(share)}</p>
-            <p className="text-xs text-muted-foreground">
-              {share.target_type} · {expiryLabel(share)}
+            <p className="truncate text-xs text-muted-foreground">
+              {share.target_type} · shared {new Date(share.created_at).toLocaleDateString()} ·{" "}
+              {expiryLabel(share)}
             </p>
           </div>
           <button
