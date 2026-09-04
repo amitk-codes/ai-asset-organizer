@@ -114,17 +114,20 @@ export class AbortError extends Error {
   }
 }
 
+/** Server-reported processing stages (see api/app/routers/assets.py). */
+export type UploadStage = "stored" | "extracting" | "embedding" | "done" | "error";
+
 export type UploadHandlers = {
   /** real byte-upload progress (0-100) */
   onProgress?: (pct: number) => void;
-  /** bytes fully sent; server is now doing AI processing (no % available) */
-  onProcessing?: () => void;
+  /** live server stage as it processes the file */
+  onStage?: (stage: UploadStage) => void;
   signal?: AbortSignal;
 };
 
-// XHR (not fetch) so we can report real upload progress + support cancel
+// XHR (not fetch) so we get real upload progress, incremental SSE parsing, and cancel
 export function uploadAsset(file: File, handlers: UploadHandlers = {}): Promise<Asset> {
-  const { onProgress, onProcessing, signal } = handlers;
+  const { onProgress, onStage, signal } = handlers;
   return new Promise<Asset>((resolve, reject) => {
     if (signal?.aborted) {
       reject(new AbortError());
@@ -142,19 +145,34 @@ export function uploadAsset(file: File, handlers: UploadHandlers = {}): Promise<
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
     };
-    // upload body fully sent → server is now processing (caption + embedding)
-    xhr.upload.onload = () => onProcessing?.();
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
+    // parse the SSE stream incrementally out of the growing responseText
+    let processed = 0;
+    let asset: Asset | null = null;
+    let errorDetail: string | null = null;
+    const flush = (final: boolean) => {
+      const parts = xhr.responseText.split("\n\n");
+      const upTo = final ? parts.length : parts.length - 1;
+      for (; processed < upTo; processed++) {
+        const line = parts[processed].trim();
+        if (!line.startsWith("data:")) continue;
+        let obj: { stage: UploadStage; asset?: Asset; detail?: string };
         try {
-          resolve(JSON.parse(xhr.responseText) as Asset);
+          obj = JSON.parse(line.slice(5).trim());
         } catch {
-          reject(new ApiError(xhr.status, "Malformed response"));
+          continue;
         }
-      } else {
-        reject(new ApiError(xhr.status, "Upload failed"));
+        if (obj.stage === "done") asset = obj.asset ?? null;
+        else if (obj.stage === "error") errorDetail = obj.detail ?? "Upload failed";
+        else onStage?.(obj.stage);
       }
+    };
+
+    xhr.onprogress = () => flush(false);
+    xhr.onload = () => {
+      flush(true);
+      if (asset) resolve(asset);
+      else reject(new ApiError(xhr.status || 500, errorDetail ?? "Upload failed"));
     };
     xhr.onerror = () => reject(new ApiError(0, "Network error"));
     xhr.onabort = () => reject(new AbortError());

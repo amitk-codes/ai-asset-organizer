@@ -4,12 +4,18 @@ import * as React from "react";
 import { AlertCircle, Ban, Check, Clock, Loader2, RotateCcw, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { AbortError, uploadAsset } from "@/lib/api";
+import { AbortError, uploadAsset, type UploadStage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 const ACCEPTED = ["image/", "application/pdf", "text/"];
 const CONCURRENCY = 3;
+
+const STAGE_LABEL: Record<string, string> = {
+  stored: "Uploaded",
+  extracting: "Reading & describing…",
+  embedding: "Indexing…",
+};
 
 type Status = "queued" | "uploading" | "processing" | "done" | "error" | "canceled" | "skipped";
 type Item = {
@@ -19,7 +25,10 @@ type Item = {
   status: Status;
   reason?: string;
   progress: number;
+  stage?: UploadStage;
 };
+
+export type UploaderHandle = { cancelAll: () => void };
 
 function validate(file: File): { ok: true } | { ok: false; reason: string } {
   if (!ACCEPTED.some((p) => file.type.startsWith(p))) return { ok: false, reason: "Unsupported type" };
@@ -27,7 +36,10 @@ function validate(file: File): { ok: true } | { ok: false; reason: string } {
   return { ok: true };
 }
 
-export function Uploader({ onUploaded }: { onUploaded: () => void }) {
+export const Uploader = React.forwardRef<
+  UploaderHandle,
+  { onUploaded: () => void; onBusyChange?: (busy: boolean) => void }
+>(function Uploader({ onUploaded, onBusyChange }, ref) {
   const [dragging, setDragging] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [items, setItems] = React.useState<Item[]>([]);
@@ -37,6 +49,10 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
   const controllers = React.useRef<Map<string, AbortController>>(new Map());
   const canceled = React.useRef<Set<string>>(new Set());
 
+  function changeBusy(next: boolean) {
+    setBusy(next);
+    onBusyChange?.(next);
+  }
   function commit(next: Item[]) {
     itemsRef.current = next;
     setItems(next);
@@ -49,11 +65,11 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
     async (id: string, file: File): Promise<Status> => {
       const controller = new AbortController();
       controllers.current.set(id, controller);
-      patch(id, { status: "uploading", progress: 0 });
+      patch(id, { status: "uploading", progress: 0, stage: undefined });
       try {
         await uploadAsset(file, {
           onProgress: (pct) => patch(id, { progress: pct }),
-          onProcessing: () => patch(id, { status: "processing" }),
+          onStage: (stage) => patch(id, { status: "processing", stage }),
           signal: controller.signal,
         });
         patch(id, { status: "done", progress: 100 });
@@ -85,9 +101,7 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
         results.push(await uploadOne(id, file));
       }
     };
-    await Promise.all(
-      Array.from({ length: Math.min(CONCURRENCY, entries.length) }, () => worker()),
-    );
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, entries.length) }, () => worker()));
     return results;
   }
 
@@ -103,11 +117,11 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
         : { id, file, name: file.name, status: "skipped" as Status, reason: v.reason, progress: 0 };
     });
     commit(next);
-    setBusy(true);
+    changeBusy(true);
 
     const entries = next.filter((it) => it.status === "queued").map((it) => ({ id: it.id, file: it.file }));
     const results = await runPool(entries);
-    setBusy(false);
+    changeBusy(false);
 
     const done = results.filter((r) => r === "done").length;
     const failed = results.filter((r) => r === "error").length;
@@ -118,27 +132,32 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
     if (done > 0) onUploaded();
   }
 
-  function cancelOne(id: string) {
-    canceled.current.add(id);
-    controllers.current.get(id)?.abort();
-    patch(id, { status: "canceled" });
-  }
+  const cancelOne = React.useCallback(
+    (id: string) => {
+      canceled.current.add(id);
+      controllers.current.get(id)?.abort();
+      patch(id, { status: "canceled" });
+    },
+    [patch],
+  );
 
-  function cancelAll() {
+  const cancelAll = React.useCallback(() => {
     itemsRef.current.forEach((it) => {
       if (it.status === "queued" || it.status === "uploading" || it.status === "processing") {
         cancelOne(it.id);
       }
     });
-  }
+  }, [cancelOne]);
+
+  React.useImperativeHandle(ref, () => ({ cancelAll }), [cancelAll]);
 
   async function retryOne(id: string) {
     const it = itemsRef.current.find((x) => x.id === id);
     if (!it) return;
     canceled.current.delete(id);
-    setBusy(true);
+    changeBusy(true);
     const res = await uploadOne(id, it.file);
-    setBusy(false);
+    changeBusy(false);
     if (res === "done") onUploaded();
   }
 
@@ -206,9 +225,7 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
         <>
           {busy && activeCount > 0 && (
             <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold text-muted-foreground">
-                {activeCount} in progress
-              </span>
+              <span className="text-xs font-bold text-muted-foreground">{activeCount} in progress</span>
               <button
                 onClick={cancelAll}
                 className="focus-ring rounded-lg text-xs font-bold text-red-500 hover:underline"
@@ -226,7 +243,7 @@ export function Uploader({ onUploaded }: { onUploaded: () => void }) {
       )}
     </div>
   );
-}
+});
 
 function Row({ item, onCancel, onRetry }: { item: Item; onCancel: () => void; onRetry: () => void }) {
   const cancelable = item.status === "queued" || item.status === "uploading" || item.status === "processing";
@@ -244,7 +261,9 @@ function Row({ item, onCancel, onRetry }: { item: Item; onCancel: () => void; on
           </span>
         )}
         {item.status === "processing" && (
-          <span className="shrink-0 text-xs font-bold text-muted-foreground">Processing…</span>
+          <span className="shrink-0 text-xs font-bold text-muted-foreground">
+            {STAGE_LABEL[item.stage ?? "extracting"] ?? "Processing…"}
+          </span>
         )}
         {item.status === "queued" && (
           <span className="shrink-0 text-xs font-bold text-muted-foreground">Queued</span>

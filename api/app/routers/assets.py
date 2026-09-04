@@ -1,7 +1,10 @@
+import json
 import re
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.auth import get_user_id
@@ -20,6 +23,10 @@ def _safe_name(name: str | None) -> str:
     return re.sub(r"[^A-Za-z0-9._-]", "_", name or "file")
 
 
+def _sse(obj: dict) -> str:
+    return f"data: {json.dumps(obj)}\n\n"
+
+
 class MoveRequest(BaseModel):
     folder_id: str | None = None  # null moves the asset out of any folder
 
@@ -35,46 +42,69 @@ class BatchMoveRequest(BaseModel):
 
 @router.post("")
 async def upload_asset(file: UploadFile = File(...), user_id: str = Depends(get_user_id)):
+    """Streams progress as Server-Sent-style events so the UI can show real
+    processing stages: stored -> extracting -> embedding -> done (or error)."""
     data = await file.read()
+    filename = file.filename
+    content_type = file.content_type
     asset_id = str(uuid.uuid4())
     # namespace by id (no collisions) and sanitise the name for the storage key
-    storage_path = f"{asset_id}/{_safe_name(file.filename)}"
+    storage_path = f"{asset_id}/{_safe_name(filename)}"
 
-    supabase = get_supabase()
-    try:
-        supabase.storage.from_(BUCKET).upload(
-            storage_path,
-            data,
-            file_options={"content-type": file.content_type or "application/octet-stream"},
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"upload failed: {exc}") from exc
+    async def stream():
+        supabase = get_supabase()
 
-    try:
-        content_text = extract_content(data, file.content_type)
-    except Exception:
-        content_text = ""  # best-effort; a failed extraction shouldn't fail the upload
-
-    embedding = None
-    if content_text:
+        # 1. store the raw bytes
         try:
-            embedding = embed_text(content_text)
-        except Exception:
-            embedding = None
+            await run_in_threadpool(
+                lambda: supabase.storage.from_(BUCKET).upload(
+                    storage_path,
+                    data,
+                    file_options={"content-type": content_type or "application/octet-stream"},
+                )
+            )
+        except Exception as exc:
+            yield _sse({"stage": "error", "detail": f"upload failed: {exc}"})
+            return
+        yield _sse({"stage": "stored"})
 
-    row = {
-        "id": asset_id,
-        "user_id": user_id,
-        "filename": file.filename,
-        "storage_path": storage_path,
-        "mime_type": file.content_type,
-        "size_bytes": len(data),
-        "content_text": content_text or None,
-        "embedding": embedding,
-        "status": "processed" if content_text else "uploaded",
-    }
-    inserted = supabase.table("assets").insert(row).execute()
-    return inserted.data[0]
+        # 2. extract searchable content (vision caption / pdf text) — best-effort
+        yield _sse({"stage": "extracting"})
+        try:
+            content_text = await run_in_threadpool(extract_content, data, content_type)
+        except Exception:
+            content_text = ""
+
+        # 3. embed for semantic search — best-effort
+        embedding = None
+        if content_text:
+            yield _sse({"stage": "embedding"})
+            try:
+                embedding = await run_in_threadpool(embed_text, content_text)
+            except Exception:
+                embedding = None
+
+        # 4. persist the row
+        row = {
+            "id": asset_id,
+            "user_id": user_id,
+            "filename": filename,
+            "storage_path": storage_path,
+            "mime_type": content_type,
+            "size_bytes": len(data),
+            "content_text": content_text or None,
+            "embedding": embedding,
+            "status": "processed" if content_text else "uploaded",
+        }
+        try:
+            inserted = await run_in_threadpool(
+                lambda: supabase.table("assets").insert(row).execute()
+            )
+            yield _sse({"stage": "done", "asset": inserted.data[0]})
+        except Exception as exc:
+            yield _sse({"stage": "error", "detail": f"save failed: {exc}"})
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
 
 
 @router.get("")

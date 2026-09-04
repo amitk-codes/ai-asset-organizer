@@ -88,6 +88,13 @@ body {
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
 }
 
+/* thin, always-legible scrollbar (macOS overlay scrollbars auto-hide, hiding
+   the fact that a region scrolls) */
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
 /* safe-area helpers for the mobile bottom tab bar (handles iOS home indicator
    and browsers whose address bar sits at the bottom) */
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }

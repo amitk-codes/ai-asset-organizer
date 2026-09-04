@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   Files,
   Folder as FolderIcon,
@@ -88,7 +89,7 @@ export function AppSidebar({
               Folders
             </p>
           )}
-          <div className="flex-1 space-y-2 overflow-y-auto">
+          <FolderScroll>
             {folders.map((folder) => (
               <FolderItem
                 key={folder.id}
@@ -98,12 +99,14 @@ export function AppSidebar({
                 onDelete={() => onDeleteFolder(folder.id)}
               />
             ))}
-          </div>
+          </FolderScroll>
         </>
       )}
 
       {has("account") && (
-        <div className={cn("space-y-1.5", has("folders") ? "pt-4" : "")}>
+        <div
+          className={cn("space-y-1.5", has("folders") ? "mt-3 border-t border-border pt-4" : "")}
+        >
           <FooterItem icon={Link2} label="Shared links" onClick={onManageShares} />
           <FooterItem icon={KeyRound} label="Copy key" onClick={onCopyKey} />
           <FooterItem icon={RefreshCw} label="New key" onClick={onRotate} />
@@ -220,4 +223,63 @@ function FooterItem({
       {label}
     </button>
   );
+}
+
+/** Scrollable folder list with edge fades + a thin scrollbar, so it's obvious
+    the region scrolls (and where it ends) even when the sidebar is short. */
+function FolderScroll({ children }: { children: React.ReactNode }) {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const innerRef = React.useRef<HTMLDivElement>(null);
+  const edges = useEdgeFade(scrollRef, innerRef);
+
+  return (
+    <div className="relative min-h-12 flex-1">
+      <div ref={scrollRef} className="scrollbar-thin h-full overflow-y-auto pr-1">
+        <div ref={innerRef} className="space-y-2">
+          {children}
+        </div>
+      </div>
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-background to-transparent transition-opacity",
+          edges.top ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent transition-opacity",
+          edges.bottom ? "opacity-100" : "opacity-0",
+        )}
+      />
+    </div>
+  );
+}
+
+function useEdgeFade(
+  scrollRef: React.RefObject<HTMLDivElement | null>,
+  innerRef: React.RefObject<HTMLDivElement | null>,
+) {
+  const [edges, setEdges] = React.useState({ top: false, bottom: false });
+
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // fires on scroll (event) and on size change (ResizeObserver, async) —
+    // never a synchronous setState in the effect body
+    const update = () =>
+      setEdges({
+        top: el.scrollTop > 4,
+        bottom: el.scrollTop + el.clientHeight < el.scrollHeight - 4,
+      });
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    if (innerRef.current) ro.observe(innerRef.current);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [scrollRef, innerRef]);
+
+  return edges;
 }
