@@ -3,9 +3,8 @@ import io
 from google.genai import types
 from pypdf import PdfReader
 
-from app.gemini_client import get_gemini, with_retry
-
-VISION_MODEL = "gemini-flash-lite-latest"
+from app.config import settings
+from app.gemini_client import get_gemini
 
 _IMAGE_PROMPT = (
     "Describe this image so it can be found later by search. Include: what it shows; the kind of "
@@ -29,14 +28,12 @@ def extract_content(data: bytes, mime_type: str | None) -> str:
 
 def _describe_image(data: bytes, mime_type: str) -> str:
     client = get_gemini()
-    response = with_retry(
-        lambda: client.models.generate_content(
-            model=VISION_MODEL,
-            contents=[
-                types.Part.from_bytes(data=data, mime_type=mime_type),
-                _IMAGE_PROMPT,
-            ],
-        )
+    response = client.models.generate_content(
+        model=settings.gemini_vision_model,
+        contents=[
+            types.Part.from_bytes(data=data, mime_type=mime_type),
+            _IMAGE_PROMPT,
+        ],
     )
     return (response.text or "").strip()
 

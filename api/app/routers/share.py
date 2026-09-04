@@ -17,7 +17,7 @@ SIGNED_URL_TTL = 3600  # seconds
 class ShareRequest(BaseModel):
     target_type: str  # 'folder' or 'asset'
     target_id: str
-    expires_in_hours: int | None = None  # null = never expires
+    expires_in_hours: float | None = None  # null = never expires; float allows sub-hour (minutes/seconds)
 
 
 @router.post("")

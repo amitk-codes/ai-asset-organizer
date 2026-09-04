@@ -5,6 +5,7 @@ import { ExternalLink, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { deleteAsset, moveAsset, type Asset, type Folder } from "@/lib/api";
+import { Markdown } from "@/components/markdown";
 import { ShareButton } from "@/components/share-button";
 import { buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -123,7 +124,7 @@ function DetailBody({
             <p className="mb-2 text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
               What this is
             </p>
-            <p className="text-[15px] leading-relaxed">{asset.content_text}</p>
+            <Markdown text={asset.content_text} className="text-[15px] leading-relaxed" />
           </div>
         )}
 

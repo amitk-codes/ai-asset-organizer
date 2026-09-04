@@ -2,10 +2,8 @@ import json
 
 from google.genai import types
 
-from app.gemini_client import get_gemini, with_retry
-
-# flash-lite has a far more generous free-tier daily quota than flash-latest
-MODEL = "gemini-flash-lite-latest"
+from app.config import settings
+from app.gemini_client import get_gemini
 
 _SYSTEM = (
     "You are a file organizer. Group the files into clear, SPECIFIC folders based on what each file "
@@ -42,16 +40,14 @@ def suggest_folders(assets: list[dict], existing_names: list[str] | None = None)
         )
 
     client = get_gemini()
-    response = with_retry(
-        lambda: client.models.generate_content(
-            model=MODEL,
-            contents=user,
-            config=types.GenerateContentConfig(
-                system_instruction=_SYSTEM,
-                response_mime_type="application/json",
-                temperature=0.2,
-            ),
-        )
+    response = client.models.generate_content(
+        model=settings.gemini_organize_model,
+        contents=user,
+        config=types.GenerateContentConfig(
+            system_instruction=_SYSTEM,
+            response_mime_type="application/json",
+            temperature=0.2,
+        ),
     )
     payload = json.loads(response.text or "{}")
     return payload.get("folders", [])

@@ -1,34 +1,31 @@
 import logging
-import time
 from functools import lru_cache
 
 from google import genai
-from google.genai import errors
+from google.genai import types
 
 from app.config import settings
 
 # the SDK logs an "automatic function calling" note on every call; we pass no tools
 logging.getLogger("google_genai").setLevel(logging.ERROR)
 
-# Gemini occasionally returns these on high demand / rate limits — worth retrying
-_RETRYABLE = {429, 500, 503}
-
 
 @lru_cache
 def get_gemini() -> genai.Client:
-    return genai.Client(api_key=settings.gemini_api_key)
+    """A Gemini client with a hard per-request timeout and a single, bounded retry layer.
 
-
-def with_retry(fn, attempts: int = 4):
-    """Call a Gemini request, retrying transient 503/429/500 errors with backoff."""
-    last: Exception | None = None
-    for i in range(attempts):
-        try:
-            return fn()
-        except errors.APIError as exc:
-            last = exc
-            if getattr(exc, "code", None) in _RETRYABLE and i < attempts - 1:
-                time.sleep(1.5 * (i + 1))  # 1.5s, 3s, 4.5s
-                continue
-            raise
-    raise last  # pragma: no cover
+    The SDK retries transient 429/500/503/504s itself, so callers must NOT wrap calls in
+    a second retry — two layers is how a brief spike turned into minutes-long hangs.
+    """
+    return genai.Client(
+        api_key=settings.gemini_api_key,
+        http_options=types.HttpOptions(
+            timeout=settings.gemini_timeout_ms,
+            retry_options=types.HttpRetryOptions(
+                attempts=3,
+                initial_delay=1.0,
+                max_delay=8.0,
+                http_status_codes=[429, 500, 503, 504],
+            ),
+        ),
+    )

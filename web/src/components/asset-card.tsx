@@ -6,7 +6,7 @@ import { Check, File, FileText, Image as ImageIcon } from "lucide-react";
 import { type Asset } from "@/lib/api";
 import { fileKind, typeMeta } from "@/lib/file-types";
 import { ShareButton } from "@/components/share-button";
-import { cn } from "@/lib/utils";
+import { cn, stripMarkdown } from "@/lib/utils";
 
 export function AssetCard({
   asset,
@@ -93,7 +93,7 @@ export function AssetCard({
           // paper preview: a snippet of the extracted text on a document-like page
           <div className="h-full w-full overflow-hidden bg-paper p-4 text-left">
             <p className="line-clamp-6 text-[10px] leading-relaxed text-paper-foreground">
-              {asset.content_text}
+              {stripMarkdown(asset.content_text)}
             </p>
           </div>
         ) : (
@@ -117,7 +117,9 @@ export function AssetCard({
           </span>
         </div>
         {asset.content_text && (
-          <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">{asset.content_text}</p>
+          <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">
+            {stripMarkdown(asset.content_text)}
+          </p>
         )}
       </div>
     </div>

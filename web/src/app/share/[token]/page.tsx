@@ -3,6 +3,7 @@ import { ExternalLink, File, FileText, Image as ImageIcon, Sparkles } from "luci
 
 import { getShare, type SharedAsset, type ShareResponse } from "@/lib/api";
 import { fileKind, typeMeta } from "@/lib/file-types";
+import { stripMarkdown } from "@/lib/utils";
 
 async function loadShare(token: string): Promise<ShareResponse | null> {
   try {
@@ -107,7 +108,7 @@ function ShareCard({ asset }: { asset: SharedAsset }) {
         ) : asset.content_text ? (
           <div className="h-full w-full overflow-hidden bg-paper p-4 text-left">
             <p className="line-clamp-6 text-[10px] leading-relaxed text-paper-foreground">
-              {asset.content_text}
+              {stripMarkdown(asset.content_text)}
             </p>
           </div>
         ) : (
@@ -125,7 +126,9 @@ function ShareCard({ asset }: { asset: SharedAsset }) {
         </span>
         <p className="mt-2 truncate text-[15px] font-extrabold">{asset.filename}</p>
         {asset.content_text && (
-          <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">{asset.content_text}</p>
+          <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">
+            {stripMarkdown(asset.content_text)}
+          </p>
         )}
         {asset.url && (
           <a

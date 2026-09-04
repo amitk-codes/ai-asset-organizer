@@ -9,7 +9,9 @@ import { useSearch } from "@/lib/search-context";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-const MIN_SIMILARITY = 0.62; // tuned: relevant matches score 0.63+, noise stays below
+// gemini-embedding-001 @768d compresses scores into a narrow band: correct matches land
+// ~0.57-0.67 (cross-language queries like "gaadi"/"billi" sit at the low end), noise below ~0.55.
+const MIN_SIMILARITY = 0.55;
 
 type Match = { asset: Asset; score: number };
 

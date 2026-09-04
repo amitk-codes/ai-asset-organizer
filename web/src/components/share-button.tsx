@@ -16,6 +16,10 @@ const OPTIONS: { label: string; hours: number | null }[] = [
   { label: "Never expires", hours: null },
 ];
 
+const UNIT_HOURS = { seconds: 1 / 3600, minutes: 1 / 60, hours: 1, days: 24, weeks: 168 } as const;
+type Unit = keyof typeof UNIT_HOURS;
+const CUSTOM = "__custom__";
+
 export function ShareButton({
   targetType,
   targetId,
@@ -25,9 +29,15 @@ export function ShareButton({
 }) {
   const [open, setOpen] = React.useState(false);
   const [pending, setPending] = React.useState<string | null>(null);
+  const [amount, setAmount] = React.useState("3");
+  const [unit, setUnit] = React.useState<Unit>("days");
 
-  async function share(label: string, hours: number | null) {
-    setPending(label);
+  const customN = Math.floor(Number(amount));
+  const customValid = Number.isFinite(customN) && customN >= 1;
+  const customHours = customN * UNIT_HOURS[unit];
+
+  async function share(key: string, hours: number | null) {
+    setPending(key);
     try {
       const created = await createShare(targetType, targetId, { expiresInHours: hours });
       const url = `${window.location.origin}/share/${created.id}`;
@@ -71,7 +81,7 @@ export function ShareButton({
                 onClick={() => share(o.label, o.hours)}
                 disabled={pending !== null}
                 className={cn(
-                  "focus-ring flex w-full items-center justify-between rounded-2xl bg-muted px-4 py-3 text-sm font-bold transition-shadow clay-inset disabled:opacity-60",
+                  "focus-ring flex w-full items-center justify-between rounded-2xl bg-card px-4 py-3 text-sm font-bold transition-shadow clay-sm clay-press disabled:opacity-60",
                   o.hours === null && "text-primary",
                 )}
               >
@@ -79,6 +89,42 @@ export function ShareButton({
                 {pending === o.label && <Loader2 className="h-4 w-4 animate-spin" />}
               </button>
             ))}
+
+            <div className="flex items-center gap-2 pt-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              Custom
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                aria-label="Expiry amount"
+                className="no-spinner focus-ring w-16 rounded-2xl bg-muted px-3 py-3 text-center text-sm font-bold outline-none clay-inset"
+              />
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value as Unit)}
+                aria-label="Expiry unit"
+                className="focus-ring flex-1 rounded-2xl bg-muted px-3 py-3 text-sm font-bold outline-none clay-inset"
+              >
+                <option value="seconds">Seconds</option>
+                <option value="minutes">Minutes</option>
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+                <option value="weeks">Weeks</option>
+              </select>
+              <button
+                onClick={() => customValid && share(CUSTOM, customHours)}
+                disabled={pending !== null || !customValid}
+                className="focus-ring flex shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition-shadow clay-sm clay-press disabled:opacity-50"
+              >
+                {pending === CUSTOM ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
+              </button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

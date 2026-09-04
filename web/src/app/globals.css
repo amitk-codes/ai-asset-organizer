@@ -104,6 +104,11 @@ body {
 /* floating things (bulk bar, toasts) sit above the tab bar on mobile */
 .bottom-above-tabbar { bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px)); }
 
+/* number inputs without the native up/down spinner arrows */
+.no-spinner { appearance: textfield; }
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
 /* claymorphism: soft puffy dual-shadow (raised) + inset (pressed) */
 .clay {
   box-shadow: 7px 7px 16px var(--clay-dark), -7px -7px 16px var(--clay-light);
