@@ -107,19 +107,44 @@ export async function listAssets(opts?: {
   return res.json();
 }
 
-// XHR (not fetch) so we can report real upload progress
-export function uploadAsset(file: File, onProgress?: (pct: number) => void): Promise<Asset> {
+export class AbortError extends Error {
+  constructor() {
+    super("aborted");
+    this.name = "AbortError";
+  }
+}
+
+export type UploadHandlers = {
+  /** real byte-upload progress (0-100) */
+  onProgress?: (pct: number) => void;
+  /** bytes fully sent; server is now doing AI processing (no % available) */
+  onProcessing?: () => void;
+  signal?: AbortSignal;
+};
+
+// XHR (not fetch) so we can report real upload progress + support cancel
+export function uploadAsset(file: File, handlers: UploadHandlers = {}): Promise<Asset> {
+  const { onProgress, onProcessing, signal } = handlers;
   return new Promise<Asset>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new AbortError());
+      return;
+    }
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${BASE}/assets`);
     const key = getKey();
     if (key) xhr.setRequestHeader("X-Api-Key", key);
 
+    const onAbort = () => xhr.abort();
+    signal?.addEventListener("abort", onAbort);
+    xhr.onloadend = () => signal?.removeEventListener("abort", onAbort);
+
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
-      }
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
     };
+    // upload body fully sent → server is now processing (caption + embedding)
+    xhr.upload.onload = () => onProcessing?.();
+
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
@@ -132,7 +157,7 @@ export function uploadAsset(file: File, onProgress?: (pct: number) => void): Pro
       }
     };
     xhr.onerror = () => reject(new ApiError(0, "Network error"));
-    xhr.onabort = () => reject(new ApiError(0, "Upload aborted"));
+    xhr.onabort = () => reject(new AbortError());
 
     const form = new FormData();
     form.append("file", file);
