@@ -34,7 +34,7 @@ export function ShareButton({
     <button
       onClick={share}
       aria-label="Share"
-      className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+      className="focus-ring shrink-0 rounded-lg text-muted-foreground transition-colors hover:text-foreground"
     >
       {state === "loading" ? (
         <Loader2 className="h-4 w-4 animate-spin" />

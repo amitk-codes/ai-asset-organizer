@@ -1,25 +1,65 @@
-"use client";
-
-import * as React from "react";
-import { useParams } from "next/navigation";
+import type { Metadata } from "next";
 import { ExternalLink, File, FileText, Image as ImageIcon, Sparkles } from "lucide-react";
 
 import { getShare, type SharedAsset, type ShareResponse } from "@/lib/api";
 import { fileKind, typeMeta } from "@/lib/file-types";
 
-export default function SharePage() {
-  const params = useParams<{ token: string }>();
-  const [data, setData] = React.useState<ShareResponse | null>(null);
-  const [error, setError] = React.useState(false);
+async function loadShare(token: string): Promise<ShareResponse | null> {
+  try {
+    return await getShare(token);
+  } catch {
+    return null;
+  }
+}
 
-  React.useEffect(() => {
-    getShare(params.token)
-      .then(setData)
-      .catch(() => setError(true));
-  }, [params.token]);
+export async function generateMetadata({
+  params,
+}: PageProps<"/share/[token]">): Promise<Metadata> {
+  const { token } = await params;
+  const data = await loadShare(token);
+  if (!data) {
+    return { title: "Shared link", description: "This share link is invalid or has expired." };
+  }
 
-  if (error) return <Center>This share link is invalid or has expired.</Center>;
-  if (!data) return <Center>Loading…</Center>;
+  const isFolder = data.type === "folder";
+  const title = isFolder ? data.folder.name : data.asset.filename;
+  const count = isFolder ? data.assets.length : 1;
+  const description = isFolder
+    ? `A shared folder with ${count} file${count !== 1 ? "s" : ""} on AI Asset Organizer.`
+    : "A file shared via AI Asset Organizer.";
+
+  const firstImage = (isFolder ? data.assets : [data.asset]).find(
+    (a) => a.mime_type?.startsWith("image/") && a.url,
+  );
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: firstImage?.url ? [firstImage.url] : undefined,
+    },
+    twitter: {
+      card: firstImage?.url ? "summary_large_image" : "summary",
+      title,
+      description,
+    },
+  };
+}
+
+export default async function SharePage({ params }: PageProps<"/share/[token]">) {
+  const { token } = await params;
+  const data = await loadShare(token);
+
+  if (!data) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-24 text-center font-semibold text-muted-foreground">
+        This share link is invalid or has expired.
+      </div>
+    );
+  }
 
   const isFolder = data.type === "folder";
   const assets: SharedAsset[] = isFolder ? data.assets : [data.asset];
@@ -57,10 +97,16 @@ function ShareCard({ asset }: { asset: SharedAsset }) {
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-muted clay-inset">
         {kind === "image" && asset.url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={asset.url} alt={asset.filename} className="h-full w-full object-cover" />
+          <img
+            src={asset.url}
+            alt={asset.filename}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         ) : asset.content_text ? (
-          <div className="h-full w-full overflow-hidden bg-white p-4 text-left">
-            <p className="line-clamp-6 text-[10px] leading-relaxed text-zinc-600">
+          <div className="h-full w-full overflow-hidden bg-paper p-4 text-left">
+            <p className="line-clamp-6 text-[10px] leading-relaxed text-paper-foreground">
               {asset.content_text}
             </p>
           </div>
@@ -86,20 +132,12 @@ function ShareCard({ asset }: { asset: SharedAsset }) {
             href={asset.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+            className="focus-ring mt-2 inline-flex items-center gap-1 rounded-md text-xs font-bold text-primary hover:underline"
           >
             Open <ExternalLink className="h-3.5 w-3.5" />
           </a>
         )}
       </div>
-    </div>
-  );
-}
-
-function Center({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mx-auto max-w-3xl px-6 py-24 text-center font-semibold text-muted-foreground">
-      {children}
     </div>
   );
 }

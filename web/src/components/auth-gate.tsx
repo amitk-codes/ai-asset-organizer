@@ -91,7 +91,8 @@ export function AuthGate({ onAuthed }: { onAuthed: () => void }) {
             value={keyInput}
             onChange={(e) => setKeyInput(e.target.value)}
             placeholder="key_…"
-            className="w-full rounded-2xl bg-muted px-4 py-3 text-[15px] font-semibold outline-none clay-inset placeholder:font-medium placeholder:text-muted-foreground"
+            aria-label="Workspace key"
+            className="focus-ring w-full rounded-2xl bg-muted px-4 py-3 text-[15px] font-semibold outline-none clay-inset placeholder:font-medium placeholder:text-muted-foreground"
           />
           <Button type="submit" className="w-full" disabled={busy || !keyInput.trim()}>
             {busy && <Loader2 className="h-4 w-4 animate-spin" />} Sign in

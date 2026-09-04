@@ -5,6 +5,7 @@ import {
   Folder as FolderIcon,
   Inbox,
   KeyRound,
+  Link2,
   LogOut,
   Plus,
   RefreshCw,
@@ -28,6 +29,7 @@ export function AppSidebar({
   onDeleteFolder,
   onCopyKey,
   onRotate,
+  onManageShares,
   onSignOut,
   className,
 }: {
@@ -40,6 +42,7 @@ export function AppSidebar({
   onDeleteFolder: (id: string) => void;
   onCopyKey: () => void;
   onRotate: () => void;
+  onManageShares: () => void;
   onSignOut: () => void;
   className?: string;
 }) {
@@ -84,6 +87,7 @@ export function AppSidebar({
       </div>
 
       <div className="space-y-1.5 pt-4">
+        <FooterItem icon={Link2} label="Shared links" onClick={onManageShares} />
         <FooterItem icon={KeyRound} label="Copy key" onClick={onCopyKey} />
         <FooterItem icon={RefreshCw} label="New key" onClick={onRotate} />
         <FooterItem icon={LogOut} label="Sign out" onClick={onSignOut} />
@@ -109,7 +113,7 @@ function NavItem({
     <button
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-[15px] font-bold transition-shadow",
+        "focus-ring flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-[15px] font-bold transition-shadow",
         active ? "clay-inset text-primary" : "text-muted-foreground hover:text-foreground",
       )}
     >
@@ -140,7 +144,10 @@ function FolderItem({
         active ? "clay-inset text-primary" : "text-muted-foreground hover:text-foreground",
       )}
     >
-      <button onClick={onClick} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+      <button
+        onClick={onClick}
+        className="focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left"
+      >
         <FolderIcon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
         <span className="flex-1 truncate">{folder.name}</span>
       </button>
@@ -153,7 +160,7 @@ function FolderItem({
       <button
         onClick={onDelete}
         aria-label="Delete folder"
-        className="hidden shrink-0 text-muted-foreground hover:text-red-500 group-hover:block"
+        className="focus-ring hidden shrink-0 rounded-lg text-muted-foreground hover:text-red-500 group-hover:block"
       >
         <Trash2 className="h-4 w-4" strokeWidth={2.5} />
       </button>
@@ -176,7 +183,7 @@ function FooterItem({
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
+      className="focus-ring flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
     >
       <Icon className="h-4 w-4 shrink-0" strokeWidth={2.5} />
       {label}

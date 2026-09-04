@@ -1,7 +1,7 @@
 import re
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
 from app.auth import get_user_id
@@ -22,6 +22,15 @@ def _safe_name(name: str | None) -> str:
 
 class MoveRequest(BaseModel):
     folder_id: str | None = None  # null moves the asset out of any folder
+
+
+class BatchDeleteRequest(BaseModel):
+    ids: list[str]
+
+
+class BatchMoveRequest(BaseModel):
+    ids: list[str]
+    folder_id: str | None = None
 
 
 @router.post("")
@@ -69,20 +78,68 @@ async def upload_asset(file: UploadFile = File(...), user_id: str = Depends(get_
 
 
 @router.get("")
-def list_assets(user_id: str = Depends(get_user_id)):
+def list_assets(
+    user_id: str = Depends(get_user_id),
+    limit: int = Query(default=60, ge=1, le=200),
+    cursor: str | None = Query(default=None),
+):
+    # keyset pagination, newest first: cursor is the created_at of the last seen row
     supabase = get_supabase()
-    result = (
-        supabase.table("assets")
-        .select("*")
-        .eq("user_id", user_id)
-        .order("created_at", desc=True)
-        .execute()
-    )
+    query = supabase.table("assets").select("*").eq("user_id", user_id)
+    if cursor:
+        query = query.lt("created_at", cursor)
+    result = query.order("created_at", desc=True).limit(limit).execute()
+
     assets = result.data
     urls = sign_paths([a["storage_path"] for a in assets])
     for asset in assets:
         asset["url"] = urls.get(asset["storage_path"])
-    return assets
+
+    next_cursor = assets[-1]["created_at"] if len(assets) == limit else None
+    return {"items": assets, "next_cursor": next_cursor}
+
+
+@router.post("/batch/delete")
+def batch_delete_assets(request: BatchDeleteRequest, user_id: str = Depends(get_user_id)):
+    if not request.ids:
+        return {"ok": True, "deleted": 0}
+    supabase = get_supabase()
+    owned = (
+        supabase.table("assets")
+        .select("id, storage_path")
+        .eq("user_id", user_id)
+        .in_("id", request.ids)
+        .execute()
+    )
+    rows = owned.data
+    if not rows:
+        return {"ok": True, "deleted": 0}
+
+    paths = [r["storage_path"] for r in rows]
+    try:
+        supabase.storage.from_(BUCKET).remove(paths)
+    except Exception:
+        pass  # best-effort; still remove the rows
+
+    ids = [r["id"] for r in rows]
+    supabase.table("assets").delete().eq("user_id", user_id).in_("id", ids).execute()
+    return {"ok": True, "deleted": len(ids)}
+
+
+@router.post("/batch/move")
+def batch_move_assets(request: BatchMoveRequest, user_id: str = Depends(get_user_id)):
+    if not request.ids:
+        return {"ok": True, "moved": 0}
+    supabase = get_supabase()
+    status = "organized" if request.folder_id else "processed"
+    result = (
+        supabase.table("assets")
+        .update({"folder_id": request.folder_id, "status": status})
+        .eq("user_id", user_id)
+        .in_("id", request.ids)
+        .execute()
+    )
+    return {"ok": True, "moved": len(result.data)}
 
 
 @router.patch("/{asset_id}")

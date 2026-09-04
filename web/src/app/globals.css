@@ -10,13 +10,16 @@
   --primary: #7c6bff;
   --primary-foreground: #ffffff;
   --muted: #ded8f1;
-  --muted-foreground: #857fab;
+  --muted-foreground: #6f6996;
   --border: #d3cded;
   --input: #d3cded;
   --ring: #7c6bff;
   --radius: 1.4rem;
   --clay-dark: #c5bfe8;
   --clay-light: #ffffff;
+  /* document-like preview surface (text/PDF snippets) */
+  --paper: #ffffff;
+  --paper-foreground: #52525b;
 }
 
 .dark {
@@ -27,12 +30,14 @@
   --primary: #8f7fff;
   --primary-foreground: #ffffff;
   --muted: #2d2947;
-  --muted-foreground: #a49ecb;
+  --muted-foreground: #b3adda;
   --border: #38335a;
   --input: #38335a;
   --ring: #8f7fff;
   --clay-dark: #191627;
   --clay-light: #302b4d;
+  --paper: #201d33;
+  --paper-foreground: #b8b3dd;
 }
 
 @theme inline {
@@ -47,6 +52,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-paper: var(--paper);
+  --color-paper-foreground: var(--paper-foreground);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 0.45rem);
   --radius-sm: calc(var(--radius) - 0.8rem);
@@ -59,6 +66,26 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 15px;
+}
+
+/* ambient backdrop: soft accent blooms so clay cards sit on a living ground */
+.app-backdrop {
+  background:
+    radial-gradient(60rem 60rem at 12% -10%, color-mix(in oklab, var(--primary) 22%, transparent), transparent 60%),
+    radial-gradient(50rem 50rem at 100% 0%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 55%),
+    radial-gradient(70rem 70rem at 50% 120%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 60%);
+}
+.dark .app-backdrop {
+  background:
+    radial-gradient(60rem 60rem at 12% -10%, color-mix(in oklab, var(--primary) 26%, transparent), transparent 60%),
+    radial-gradient(50rem 50rem at 100% 0%, color-mix(in oklab, var(--primary) 18%, transparent), transparent 55%),
+    radial-gradient(70rem 70rem at 50% 120%, color-mix(in oklab, var(--primary) 16%, transparent), transparent 60%);
+}
+
+/* accessible focus ring shared by interactive elements that opt in */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
 }
 
 /* claymorphism: soft puffy dual-shadow (raised) + inset (pressed) */
@@ -117,3 +144,27 @@ body {
   to { transform: none; }
 }
 .slide-in-left { animation: slide-in-left 0.22s ease-out; }
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-in-up {
+  animation: fade-in-up 0.32s ease-out both;
+}
+
+/* respect users who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .highlight-glow {
+    animation: none !important;
+    box-shadow: 0 0 0 2px var(--primary);
+  }
+}
