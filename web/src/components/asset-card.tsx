@@ -21,6 +21,9 @@ export function AssetCard({
   const kind = fileKind(asset.mime_type);
   const meta = typeMeta[kind];
   const Icon = kind === "pdf" ? FileText : kind === "image" ? ImageIcon : File;
+  const ext = asset.filename.includes(".")
+    ? asset.filename.split(".").pop()!.toUpperCase()
+    : "FILE";
 
   React.useEffect(() => {
     if (highlighted) ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -40,12 +43,17 @@ export function AssetCard({
           // signed URL from a private bucket; plain img avoids next/image domain config
           // eslint-disable-next-line @next/next/no-img-element
           <img src={asset.url} alt={asset.filename} className="h-full w-full object-cover" />
+        ) : asset.content_text ? (
+          // paper preview: a snippet of the extracted text on a document-like page
+          <div className="h-full w-full overflow-hidden bg-white p-4 text-left">
+            <p className="line-clamp-6 text-[10px] leading-relaxed text-zinc-600">
+              {asset.content_text}
+            </p>
+          </div>
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Icon
-              className={kind === "pdf" ? "h-12 w-12 text-red-400" : "h-12 w-12 text-emerald-400"}
-              strokeWidth={1.75}
-            />
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+            <Icon className="h-10 w-10" strokeWidth={1.5} />
+            <span className="text-xs font-extrabold uppercase tracking-wide">{ext}</span>
           </div>
         )}
       </div>

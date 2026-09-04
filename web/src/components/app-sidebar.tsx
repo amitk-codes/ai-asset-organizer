@@ -16,6 +16,7 @@ import { type Folder } from "@/lib/api";
 import { UNORGANIZED } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/share-button";
 
 export function AppSidebar({
   folders,
@@ -143,6 +144,12 @@ function FolderItem({
         <FolderIcon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
         <span className="flex-1 truncate">{folder.name}</span>
       </button>
+      <span
+        onClick={(e) => e.stopPropagation()}
+        className="hidden shrink-0 group-hover:flex"
+      >
+        <ShareButton targetType="folder" targetId={folder.id} />
+      </span>
       <button
         onClick={onDelete}
         aria-label="Delete folder"

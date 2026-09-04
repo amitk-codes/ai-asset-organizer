@@ -24,6 +24,7 @@ import { AuthGate } from "@/components/auth-gate";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { GridToolbar, type SortKey, type TypeFilter } from "@/components/grid-toolbar";
+import { KeyModal } from "@/components/key-modal";
 import { SkeletonGrid } from "@/components/skeleton-grid";
 import { UploadModal } from "@/components/upload-modal";
 
@@ -40,6 +41,7 @@ export default function DashboardPage() {
   const [folderToDelete, setFolderToDelete] = React.useState<string | null>(null);
   const [highlightId, setHighlightId] = React.useState<string | null>(null);
   const [mobileNav, setMobileNav] = React.useState(false);
+  const [newKey, setNewKey] = React.useState<string | null>(null);
 
   const { setConfig } = useSearch();
 
@@ -72,7 +74,7 @@ export default function DashboardPage() {
   const showInFolder = React.useCallback((asset: Asset) => {
     setSelected(asset.folder_id ?? UNORGANIZED);
     setHighlightId(asset.id);
-    window.setTimeout(() => setHighlightId(null), 5000);
+    window.setTimeout(() => setHighlightId(null), 2000);
   }, []);
 
   // publish search to the navbar while there are files to search
@@ -113,7 +115,7 @@ export default function DashboardPage() {
     try {
       const key = await rotateKey();
       setKey(key);
-      toast.success("New key generated and saved");
+      setNewKey(key);
     } catch {
       toast.error("Couldn't generate a new key.");
     }
@@ -186,8 +188,8 @@ export default function DashboardPage() {
 
       {mobileNav && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileNav(false)} />
-          <div className="relative h-full w-72 bg-background">
+          <div className="fade-in absolute inset-0 bg-black/40" onClick={() => setMobileNav(false)} />
+          <div className="slide-in-left relative h-full w-72 bg-background">
             <AppSidebar
               {...sidebarProps}
               className="flex"
@@ -219,7 +221,7 @@ export default function DashboardPage() {
             <EmptyState onUpload={() => setUploadOpen(true)} />
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-extrabold">
                   {title}{" "}
                   <span className="font-normal text-muted-foreground">· {filtered.length}</span>
@@ -249,6 +251,8 @@ export default function DashboardPage() {
         onReload={reload}
         assets={assets}
       />
+
+      <KeyModal keyValue={newKey} onClose={() => setNewKey(null)} />
 
       <ConfirmDialog
         open={folderToDelete !== null}

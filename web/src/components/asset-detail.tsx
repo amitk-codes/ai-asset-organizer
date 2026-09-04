@@ -72,9 +72,9 @@ export function AssetDetail({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="fade-in absolute inset-0 bg-black/40" onClick={onClose} />
 
-      <div className="relative flex h-full w-full max-w-md flex-col bg-background">
+      <div className="slide-in-right relative flex h-full w-full max-w-md flex-col bg-background">
         <div className="flex items-center justify-between gap-3 p-5">
           <h3 className="min-w-0 truncate text-lg font-extrabold">{asset.filename}</h3>
           <button
