@@ -68,6 +68,21 @@ body {
   font-size: 15px;
 }
 
+/* Tailwind v4's reset drops the pointer cursor on buttons; restore it for every
+   interactive element so the whole app feels clickable. */
+@layer base {
+  button:not(:disabled),
+  [role="button"],
+  select,
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
 /* ambient backdrop: soft accent blooms so clay cards sit on a living ground */
 .app-backdrop {
   background:

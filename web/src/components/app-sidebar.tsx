@@ -183,18 +183,24 @@ function FolderItem({
 }) {
   return (
     <div
+      onClick={onClick}
+      onKeyDown={(e) => {
+        // only the row itself acts on keys; nested buttons handle their own
+        if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open folder ${folder.name}`}
       className={cn(
-        "group flex items-center gap-3 rounded-2xl px-4 py-3 text-[15px] font-bold transition-shadow",
+        "focus-ring group flex items-center gap-3 rounded-2xl px-4 py-3 text-[15px] font-bold transition-shadow",
         active ? "clay-inset text-primary" : "text-muted-foreground hover:text-foreground",
       )}
     >
-      <button
-        onClick={onClick}
-        className="focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left"
-      >
-        <FolderIcon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-        <span className="flex-1 truncate">{folder.name}</span>
-      </button>
+      <FolderIcon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+      <span className="min-w-0 flex-1 truncate">{folder.name}</span>
       {/* actions: always shown on touch, hover-revealed on desktop */}
       <span
         onClick={(e) => e.stopPropagation()}
@@ -203,7 +209,10 @@ function FolderItem({
         <ShareButton targetType="folder" targetId={folder.id} />
       </span>
       <button
-        onClick={onDelete}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
         aria-label="Delete folder"
         className="focus-ring inline-flex shrink-0 rounded-lg text-muted-foreground hover:text-red-500 md:hidden md:group-hover:inline-flex"
       >
