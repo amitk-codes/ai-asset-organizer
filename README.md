@@ -3,7 +3,7 @@
 Upload your files and let AI do the filing. Assets are understood, grouped into a suggested folder
 structure you approve, and made searchable in plain English — "show me the invoices from March".
 
-> Status: in active development.
+**Live demo → [ai-asset-organizer.vercel.app](https://ai-asset-organizer.vercel.app)**
 
 ## Highlights
 
