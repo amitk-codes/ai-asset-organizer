@@ -61,6 +61,16 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* paint the root too, so mobile overscroll (rubber-band) shows the theme colour
+   instead of flashing the browser's default white */
+html {
+  background: var(--background);
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

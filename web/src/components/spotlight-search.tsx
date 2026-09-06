@@ -56,6 +56,13 @@ export function SpotlightSearch({
     setActiveIndex(0);
   }
 
+  // closing programmatically (open an asset / show in folder) bypasses onOpenChange,
+  // so reset here too — otherwise the stale query/results reappear next time
+  function close() {
+    setOpen(false);
+    reset();
+  }
+
   async function run(e: React.FormEvent) {
     e.preventDefault();
     const q = query.trim();
@@ -88,7 +95,7 @@ export function SpotlightSearch({
     } else if (e.key === "Enter" && results[activeIndex]) {
       e.preventDefault();
       onOpenAsset(results[activeIndex].asset);
-      setOpen(false);
+      close();
     }
   }
 
@@ -171,11 +178,11 @@ export function SpotlightSearch({
                         onHover={() => setActiveIndex(i)}
                         onOpen={() => {
                           onOpenAsset(asset);
-                          setOpen(false);
+                          close();
                         }}
                         onShowInFolder={() => {
                           onShowInFolder(asset);
-                          setOpen(false);
+                          close();
                         }}
                       />
                     ))}

@@ -62,17 +62,19 @@ export function OrganizePanel({ assets, onApplied }: { assets: Asset[]; onApplie
 
   if (!plan) {
     return (
-      <div className="flex flex-wrap items-center gap-4 rounded-3xl bg-card p-5 clay">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-violet-500/30">
-          <Sparkles className="h-6 w-6" strokeWidth={2.5} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-base font-extrabold">Organize your new files</p>
-          <p className="text-sm text-muted-foreground">
-            {unorganizedCount} file{unorganizedCount > 1 ? "s" : ""} ready — let AI sort them into folders.
-          </p>
+      <div className="flex flex-col gap-4 rounded-3xl bg-card p-5 clay sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-violet-500/30">
+            <Sparkles className="h-6 w-6" strokeWidth={2.5} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-base font-extrabold">Organize your new files</p>
+            <p className="text-sm text-muted-foreground">
+              {unorganizedCount} file{unorganizedCount > 1 ? "s" : ""} ready — let AI sort them into folders.
+            </p>
+          </div>
         </div>
-        <Button onClick={suggest} disabled={loading}>
+        <Button onClick={suggest} disabled={loading} className="w-full justify-center sm:w-auto">
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (

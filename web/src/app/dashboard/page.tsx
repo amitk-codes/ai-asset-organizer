@@ -179,12 +179,11 @@ export default function DashboardPage() {
     window.setTimeout(() => setHighlightId(null), 2000);
   }, []);
 
-  // publish search to the navbar while there are files to search
+  // publish search to the navbar whenever signed in (search stays available even
+  // with zero files — it just returns no matches)
   React.useEffect(() => {
     setConfig(
-      authed && assets.length > 0
-        ? { assets, onOpenAsset: setActive, onShowInFolder: showInFolder }
-        : null,
+      authed ? { assets, onOpenAsset: setActive, onShowInFolder: showInFolder } : null,
     );
     return () => setConfig(null);
   }, [assets, authed, setConfig, showInFolder]);
