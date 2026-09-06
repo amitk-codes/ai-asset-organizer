@@ -5,6 +5,8 @@ structure you approve, and made searchable in plain English — "show me the inv
 
 **Live demo → [ai-asset-organizer.vercel.app](https://ai-asset-organizer.vercel.app)**
 
+![AI Asset Organizer](docs/dashboard.png)
+
 ## Highlights
 
 - **Private workspaces** — a single sign-in key per workspace; you only ever see your own files.
@@ -33,6 +35,21 @@ model for each job.
 ├── web/    # Next.js frontend
 └── api/    # FastAPI backend
 ```
+
+## Screenshots
+
+AI suggests subject folders — you review and apply:
+
+![AI organize](docs/organize.png)
+
+Uploading, with live per-file progress:
+
+![Upload](docs/upload.png)
+
+The landing page, light and dark:
+
+![Landing — light](docs/landing.png)
+![Landing — dark](docs/landing-dark.png)
 
 ## Getting started
 
