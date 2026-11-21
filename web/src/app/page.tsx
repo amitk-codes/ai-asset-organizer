@@ -3,7 +3,6 @@ import {
   ArrowRight,
   Bot,
   Database,
-  ExternalLink,
   Eye,
   FolderTree,
   Layers,
@@ -96,14 +95,6 @@ export default function Home() {
             <Link href="/dashboard" className={buttonVariants()}>
               Get started <ArrowRight className="h-5 w-5" strokeWidth={2.5} />
             </Link>
-            <a
-              href="https://github.com/amitk-codes/ai-asset-organizer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              View source <ExternalLink className="h-4 w-4" />
-            </a>
           </div>
         </section>
 

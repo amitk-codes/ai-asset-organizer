@@ -130,7 +130,6 @@ export function AppSidebar({
           <p className="text-sm font-extrabold tracking-tight">
             <span className="text-primary">AI</span> Asset Organizer
           </p>
-          <p className="text-xs font-semibold text-muted-foreground">by Amit Kumar</p>
           <div className="mt-3">
             <SocialLinks />
           </div>
